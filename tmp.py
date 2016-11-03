@@ -1,3 +1,4 @@
+# coding=utf-8
 """from setting import *
 from autoencoder import *
 import numpy
@@ -27,21 +28,29 @@ for line in ans:
         f.write(str(nn)+" ")
     f.write("\n")
 """
-name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1"
-f = open("data/network_diagnosis_data/" + name + ".log", "rb")
-con = f.readlines()[0:100]
 
-linelen = len(con)
-batch_size = linelen / 10
+# 数据分割
+names = ["BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1",
+        "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1.log",
+        "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1.log"]
 
-for idx in xrange(9):
+for name in names:
+    f = open("data/network_diagnosis_data/" + name + ".log", "rb")
+    con = f.readlines()[0:100]
+
+    linelen = len(con)
+    batch_size = linelen / 10
+
+    for idx in xrange(9):
+        wf = open("data/network_diagnosis_data/" + name + ".part" + str(idx) + ".txt", "wb")
+        for line in con[idx * batch_size: (idx + 1) * batch_size]:
+            wf.write(line.strip())
+        wf.close()
+
+    idx = 9
     wf = open("data/network_diagnosis_data/" + name + ".part" + str(idx) + ".txt", "wb")
-    for line in con[idx * batch_size: (idx + 1) * batch_size]:
+    for line in con[idx * batch_size:]:
         wf.write(line.strip())
     wf.close()
 
-idx = 9
-wf = open("data/network_diagnosis_data/" + name + ".part" + str(idx) + ".txt", "wb")
-for line in con[idx * batch_size:]:
-    wf.write(line.strip())
-wf.close()
+    f.close()
