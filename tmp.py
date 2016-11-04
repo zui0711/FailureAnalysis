@@ -52,12 +52,14 @@ for name in names:
         wf = open(path + name + "/part" + str(idx) + ".txt", "wb")
         for line in con[idx * batch_size: (idx + 1) * batch_size]:
             wf.write(line.strip())
+            wf.write("\n")
         wf.close()
 
     idx = 9
     wf = open(path + name + "/part" + str(idx) + ".txt", "wb")
     for line in con[idx * batch_size:]:
         wf.write(line.strip())
+        wf.write("\n")
     wf.close()
 
     f.close()
