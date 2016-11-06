@@ -15,8 +15,11 @@ def format_string(string):
 
 # log去符号(不分part)
 def get_text(filename):
-    f = open(filename + ".txt", "rb")
+    f = open(filename + ".log", "rb")
     context = f.readlines()
+
+    if not os.path.exists(filename):
+        os.mkdir(filename)
 
     wf = open(filename + "/clean" + ".txt", "wb")
     for line in context:
@@ -98,10 +101,14 @@ def get_dic_part(filename, partnum):
 
 
 if __name__ == "__main__":
-    names = ["BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1",
-             "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1",
-             "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"]
     path = "data/network_diagnosis_data/"
-    for name in names:
-        get_text_part(path + name, 10)
-        get_dic_part(path + name, 10)
+
+    #names = ["BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1",
+    #         "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1",
+    #         "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"]
+
+    #for name in names:
+    #    get_text_part(path + name, 10)
+    #    get_dic_part(path + name, 10)
+    get_text(path + "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1")
+    get_dic(path + "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1")
