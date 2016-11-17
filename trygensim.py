@@ -15,7 +15,7 @@ if __name__=="__main__":
     name = "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1"
 
     doc = []
-    for part in xrange(2):
+    for part in xrange(1):
         f = open(path + name + "/clean.part"  + str(part) + ".txt", "rb")
         doc += f.readlines()[0:10000]
         f.close()
@@ -28,14 +28,15 @@ if __name__=="__main__":
     corpuss=MyCorpus(doc)
 
     t1 = time.clock()
-    model = Word2Vec(corpuss, size=15, window=10, min_count=100)
+    model = Word2Vec(corpuss, size=50, window=5, min_count=100, alpha=0.0001, iter=1000)
     t2 = time.clock()
     print t2 - t1
-    wf = open(path + "dic_emb.txt", "wb")
 
     print len(model.index2word)
-    for word in model.index2word:
-        wf.write(str(word) + ","+ str(model[str(word)]) + "\n")
-        print model[str(word)]
 
-    wf.close()
+    maxv = 0
+    for name in model.index2word:
+        if abs(max(model[name])) > maxv:
+            maxv = abs(max(model[name]))
+        print name, maxv
+    #model.save(path+"word_emb")
