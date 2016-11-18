@@ -17,26 +17,27 @@ if __name__=="__main__":
     doc = []
     for part in xrange(1):
         f = open(path + name + "/clean.part"  + str(part) + ".txt", "rb")
-        doc += f.readlines()[0:10000]
+        doc += f.readlines()[0:1000]
         f.close()
 
     name1 = "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1"
     f = open(path + name1 + "/clean.txt", "rb")
-    doc += f.readlines()[0:10000]
+    doc += f.readlines()[0:1000]
     f.close()
 
     corpuss=MyCorpus(doc)
 
-    t1 = time.clock()
-    model = Word2Vec(corpuss, size=50, window=5, min_count=100, alpha=0.0001, iter=1000)
-    t2 = time.clock()
-    print t2 - t1
+    for iteration in [10, 50, 100, 1000, 2000]:
+        print "iteration = ", iteration
+        print time.strftime("%Y_%m_%d_%H:%M:%S", time.localtime())
+        model = Word2Vec(corpuss, size=36, window=5, min_count=100, iter=iteration, alpha=0.0005, min_alpha=0.00001)
+        print time.strftime("%Y_%m_%d_%H:%M:%S", time.localtime())
 
-    print len(model.index2word)
+        #print len(model.index2word)
 
-    maxv = 0
-    for name in model.index2word:
-        if abs(max(model[name])) > maxv:
-            maxv = abs(max(model[name]))
-        print name, maxv
+        maxv = 0
+        for name in model.index2word:
+            if abs(max(model[name])) > maxv:
+                maxv = abs(max(model[name]))
+        print maxv, "\n"
     #model.save(path+"word_emb")
