@@ -121,137 +121,62 @@ def get_dic(filename, part=True, partnum=10):
 
 
 # 样本分割
-def cut_data(path, name, label, part=True, partnum=10):
-    if part:
-        count = -1
-        for part in xrange(partnum):
-            f = open(path + name + "/clean.part" + str(part) + ".txt", "rb")
-            contxt = f.readlines()
+def cut_data(path, name, label, iflabel=True):
+    if iflabel:
+        f = open(path + name + "/clean.txt", "rb")
+        contxt = f.readlines()
 
-            num = []
-            for i, line in enumerate(contxt):
-                arr = line.strip().split()
-                if label in arr:
-                    num.append(i)
+        num = []
+        for i, line in enumerate(contxt):
+            arr = line.strip().split()
+            if label in arr:
+                num.append(i)
             # print num, "\n"
-            nbegin = num[0]
-            nnew = [nbegin]
-            for n in num:
-                if n - nbegin > 10:
-                    print n - nbegin
-                    nnew.append(n)
-                    nbegin = n
+        nbegin = num[0]
+        nnew = [nbegin]
+        for n in num:
+            if n - nbegin > 10:
+                print n - nbegin
+                nnew.append(n)
+                nbegin = n
 
-            newname = path + "cut/" + label + "."
-            i = 0
-            wwf = open(newname + str(i) + ".txt", "wb")
+        filename = path + "cut/labeled/"
+        if not os.path.exists(filename):
+            os.mkdir(filename)
 
-            idx = 0
-            for i, line in enumerate(contxt):
-                if i - 10 in nnew:
-                    wwf.close()
-                    wwf = open(newname + str(idx) + ".txt", "wb")
-                    idx += 1
+        newname = filename + label + "."
+        i = 0
+        wwf = open(newname + str(i) + ".txt", "wb")
+
+        idx = 0
+        for i, line in enumerate(contxt):
+            if i - 10 in nnew:
+                wwf.close()
+                wwf = open(newname + str(idx) + ".txt", "wb")
+                idx += 1
+            if i not in nnew:
                 wwf.write(line)
 
-            print nnew, len(nnew)
+        print nnew, len(nnew)
 
+    else:
+        count = -1
+        f = open(path + name + "/clean.txt", "rb")
+        contxt = f.readlines()
 
-        newname = path + "cut/" + label + "."
+        filename = path + "cut/unlabeled/"
+        if not os.path.exists(filename):
+            os.mkdir(filename)
+
+        newname = filename + label + "."
         wwf = open(newname + str(count) + ".txt", "wb")
         for i, line in enumerate(contxt):
-            if i % 10000 == 0:
+            if i % 14000 == 0:
                 wwf.close()
                 count += 1
                 wwf = open(newname + str(count) + ".txt", "wb")
             wwf.write(line)
         print count
-
-    else:
-        f = open(path + name + "/clean.txt", "rb")
-        contxt = f.readlines()
-
-        num = []
-        for i, line in enumerate(contxt):
-            arr = line.strip().split()
-            if label in arr:
-                num.append(i)
-        # print num, "\n"
-
-        nbegin = num[0]
-        nnew = [nbegin]
-        for n in num:
-            if n - nbegin > 10:
-                print n - nbegin
-                nnew.append(n)
-                nbegin = n
-
-        newname = path + "cut/" + label + "."
-        i = 0
-        wwf = open(newname + str(i) + ".txt", "wb")
-
-        idx = 0
-        for i, line in enumerate(contxt):
-            if i - 10 in nnew:
-                wwf.close()
-                wwf = open(newname + str(idx) + ".txt", "wb")
-                idx += 1
-            wwf.write(line)
-
-        print nnew, len(nnew)
-
-
-# 直接切分(不使用log中的标签)
-def  cut_data_nolabel(path, name, label, part=True):
-    if part:
-        count = -1
-        for part in xrange(10):
-            f = open(path + name + "/clean.part" + str(part) + ".txt", "rb")
-            contxt = f.readlines()
-
-            newname = path + "cut/" + label + "."
-            wwf = open(newname + str(count) + ".txt", "wb")
-            for i, line in enumerate(contxt):
-                if i % 10000 == 0:
-                    wwf.close()
-                    count += 1
-                    wwf = open(newname + str(count) + ".txt", "wb")
-                wwf.write(line)
-            print count
-
-    else:
-        f = open(path + name + "/clean.txt", "rb")
-        contxt = f.readlines()
-
-        num = []
-        for i, line in enumerate(contxt):
-            arr = line.strip().split()
-            if label in arr:
-                num.append(i)
-        # print num, "\n"
-
-        nbegin = num[0]
-        nnew = [nbegin]
-        for n in num:
-            if n - nbegin > 10:
-                print n - nbegin
-                nnew.append(n)
-                nbegin = n
-
-        newname = path + "cut/" + label + "."
-        i = 0
-        wwf = open(newname + str(i) + ".txt", "wb")
-
-        idx = 0
-        for i, line in enumerate(contxt):
-            if i - 10 in nnew:
-                wwf.close()
-                wwf = open(newname + str(idx) + ".txt", "wb")
-                idx += 1
-            wwf.write(line)
-
-        print nnew, len(nnew)
-
 
 
 if __name__ == "__main__":
