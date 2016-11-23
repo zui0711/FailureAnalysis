@@ -126,17 +126,17 @@ def cut_data(path, name, label, iflabel=True):
         f = open(path + name + "/clean.txt", "rb")
         contxt = f.readlines()
 
-        num = []
+        num = [] # 包含标签的行
         for i, line in enumerate(contxt):
-            arr = line.strip().split()
+            arr = line.split()
             if label in arr:
                 num.append(i)
             # print num, "\n"
-        nbegin = num[0]
+        nbegin = 0
         nnew = [nbegin]
         for n in num:
             if n - nbegin > 10:
-                print n - nbegin
+                #print n - nbegin
                 nnew.append(n)
                 nbegin = n
 
@@ -145,21 +145,25 @@ def cut_data(path, name, label, iflabel=True):
             os.mkdir(filename)
 
         newname = filename + label + "."
-        i = 0
-        wwf = open(newname + str(i) + ".txt", "wb")
 
         idx = 0
+        wwf = open(newname + str(idx) + ".txt", "wb")
         for i, line in enumerate(contxt):
             if i - 10 in nnew:
                 wwf.close()
                 wwf = open(newname + str(idx) + ".txt", "wb")
                 idx += 1
-            if i not in nnew:
+            if i not in num:
                 wwf.write(line)
 
         print nnew, len(nnew)
 
     else:
+        ERRORNAME = ["USER_CONGESTION",
+                     "GTPC_TUNNEL_PATH_BROKEN",
+                     "PROCESS_CPU",
+                     "SYSTEM_FLOW_CTRL",
+                     "EPU_PORT_CONGESTION"]
         count = -1
         f = open(path + name + "/clean.txt", "rb")
         contxt = f.readlines()
@@ -175,14 +179,21 @@ def cut_data(path, name, label, iflabel=True):
                 wwf.close()
                 count += 1
                 wwf = open(newname + str(count) + ".txt", "wb")
-            wwf.write(line)
+
+            arr = line.split()
+            write = True
+            for word in arr:
+                if word in ERRORNAME:
+                    write = False
+                    break
+            if write:
+                wwf.write(line)
         print count
 
 
 if __name__ == "__main__":
     path = "data/network_diagnosis_data/"
 
-    # path = "data/network_diagnosis_data/"
     # name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
     # seperate_data(path, name)
     # cut_data("data/network_diagnosis_data/", "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1", "GTPC_TUNNEL_PATH_BROKEN")
@@ -196,7 +207,11 @@ if __name__ == "__main__":
     #for name in names:
     #    get_text_part(path + name, 10)
     #    get_dic_part(path + name, 10)
-    name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
+    #name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
+    #name = "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1"
+    #name = "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1"
+    name = "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
     get_text(path + name, part=False)
     get_dic(path + name, part=False)
-    cut_data(path + name, )
+
+    cut_data(path, name, "Paging", iflabel=False)
