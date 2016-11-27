@@ -1,5 +1,6 @@
 import numpy as np
 import theano
+from gensim.models import Word2Vec
 
 unknown_word = "UNKNOWN"
 
@@ -22,17 +23,24 @@ def load_dic(dic_file, dic_size=-1):
     return idx2word, word2idx
 
 
-def sent2vector(sentence, word2idx):
+def load_model(path, modelname):
+    return Word2Vec.load(path + modelname)
+
+
+def sent2vector(sentence, model_w2v, sent_len, word_dim):
     retvector = []
+    thislen = len(sentence.split())
     for word in sentence.strip().split(" "):
-        retvector.append(word2idx[word] if word in word2idx else word2idx[unknown_word])
-    return retvector
+        retvector.append(model_w2v[word] if word in model_w2v)
+    for i in xrange(sent_len - thislen):
+        retvector.append(np.zeros(word_dim))
+    return np.array(retvector)
 
-
+"""
 def vector2sent(vector, idx2word):
     sentence = [idx2word[word] for word in vector]
     return " ".join(sentence)
-
+"""
 
 def format_sent(sent, word2idx, sent_len):
     # retvector = np.zeros(sent_len)
@@ -42,7 +50,7 @@ def format_sent(sent, word2idx, sent_len):
     return retvector
 
 
-def format_sent_cnn(sent, word2idx, sent_len):
+def format_sent_cnn(sent, model_w2v, sent_len):
     retvector = np.zeros(sent_len, dtype="int32")
     for i, word in enumerate(sent.strip().split(" ")):
         retvector[i] = (word2idx[word] if word in word2idx else word2idx[unknown_word])
@@ -60,3 +68,4 @@ if __name__ == "__main__":
     for line in context:
         # print vector2sent(sent2vector(line, word2idx),idx2word)
         print format_sent(line, word2idx, 20)
+
