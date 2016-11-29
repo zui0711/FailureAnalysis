@@ -1,10 +1,11 @@
 from mlp import *
-import sys, os, time
+import sys, os, time, random
 
 from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv
 
 from setting import *
+from utils import *
 
 # image_shape:(batch size, num input feature maps, image height, image width)
 #   (batch_size, featuremap_num, sent_len, word_dim)
@@ -59,11 +60,74 @@ class ConvLayer:
         assert image_shape[1] == filter_shape[1]
         self.input = input
 
+        x = T.matrix("x")
+        y = T.ivector("y")
 
-def mycnn(rng, learning_rate=0.1, batch_size=5*200*10):
+
+
+        print "... building the model"
+        # data 1000 sentences * 10
+        # word_dim = 50, sent_len = 20, batch_size = 5*200*10
+        # filter(3, 50) => (18, 1)
+        # get 5 sentences  => (18, 5)
+        # pool(1, 5) => (18, 1)
+        # activation
+        # => (10, 1, 200, 18)
+        batch_size = 5 * 200 * 10
+
+        layer0_input = x.reshape((batch_size, 1, 20, 50))
+        layer0 = LeNetConvPoolLayer_sent(
+            rng,
+            input=layer0_input,
+            image_shape=(batch_size, 1, 20, 50),
+            filter_shape=(1, 1, 2, 50),
+            poolsize=(1, 5)
+        )
+
+        layer1_input = layer0.output.reshape((10, 1, 200, 18))
+        layer1_input = layer1_input.flatten(2)
+        layer1 = HiddenLayer(
+            rng,
+            input=layer1_input,
+            n_in=1 * 200 * 18,
+            n_out=10,
+            activation=T.tanh
+        )
+
+        layer2 = LogisticRegression(input=layer1.output, n_in=10, n_out=4)
+
+        cost = layer2.negative_log_likelihood(y)
+        params = layer2.params + layer1.params + layer0.params
+        grads = T.grad(cost, params)
+        updates = [
+            (param_i, param_i - learning_rate * grad_i)
+            for param_i, grad_i in zip(params, grads)
+            ]
+
+        train_model = theano.function(
+            [index],
+            cost,
+            updates=updates,
+            givens={
+                x: train_set_x[index * batch_size: (index + 1) * batch_size],
+                y: train_set_y[index * batch_size: (index + 1) * batch_size]
+            }
+        )
+
+
+
+
+def mycnn(path, model_w2v, epoch, rng, learning_rate=0.1, batch_size=5*200*10):
     index = T.iscalar()
     x = T.matrix("x")
     y = T.ivector("y")
+
+    file_names = os.listdir(path)
+    file_num = len(file_names)
+    file_names_idx = range(file_num)
+    random.shuffle(file_names_idx)
+    train_idx = file_names_idx[: 7*file_num/10]
+    test_idx = file_names_idx[7*file_num/10 + 1:]
 
 
 
@@ -77,7 +141,6 @@ def mycnn(rng, learning_rate=0.1, batch_size=5*200*10):
     # => (10, 1, 200, 18)
 
     layer0_input = x.reshape((batch_size, 1, 20, 50))
-
     layer0 = LeNetConvPoolLayer_sent(
         rng,
         input=layer0_input,
@@ -87,9 +150,7 @@ def mycnn(rng, learning_rate=0.1, batch_size=5*200*10):
     )
 
     layer1_input = layer0.output.reshape((10, 1, 200, 18))
-
     layer1_input = layer1_input.flatten(2)
-
     layer1 = HiddenLayer(
         rng,
         input=layer1_input,
@@ -101,9 +162,7 @@ def mycnn(rng, learning_rate=0.1, batch_size=5*200*10):
     layer2 = LogisticRegression(input=layer1.output, n_in=10, n_out=4)
 
     cost = layer2.negative_log_likelihood(y)
-
     params = layer2.params + layer1.params + layer0.params
-
     grads = T.grad(cost, params)
 
     updates = [
@@ -116,8 +175,19 @@ def mycnn(rng, learning_rate=0.1, batch_size=5*200*10):
         cost,
         updates=updates,
         givens={
-            x: train_set_x[index * batch_size: (index + 1) * batch_size],
-            y: train_set_y[index * batch_size: (index + 1) * batch_size]
+            x: get_batchdata(path, [0, 9], file_names, train_idx, model_w2v, sent_len)[0],
+            y: get_batchdata(path, [0, 9], file_names, train_idx, model_w2v, sent_len)[1]
         }
     )
+
+
+    print "...training"
+
+
+    for ep in xrange(epoch):
+        cost = train_model()
+
+
+if __name__ == "__main__":
+    mycnn("data/")
 
