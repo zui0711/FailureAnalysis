@@ -30,8 +30,11 @@ def load_model(path, modelname):
 def sent2vector(sentence, model_w2v, sent_len, word_dim):
     retvector = []
     thislen = len(sentence.split())
+    if thislen > sent_len:
+        thislen = sent_len
     for word in sentence.strip().split(" "):
-        retvector.append(model_w2v[word] if word in model_w2v)
+        if word in model_w2v:
+            retvector.append(model_w2v[word])
     for i in xrange(sent_len - thislen):
         retvector.append(np.zeros(word_dim))
     return np.array(retvector)
@@ -42,20 +45,44 @@ def vector2sent(vector, idx2word):
     return " ".join(sentence)
 """
 
+# TODO
 def format_sent(sent, word2idx, sent_len):
     # retvector = np.zeros(sent_len)
     # for i, word in enumerate(sent.strip().split(" ")):
     #    retvector[i] = (word2idx[word] if word in word2idx else word2idx[unknown_word])
-    retvector = np.array(sent2vector(sent, word2idx)).astype("int32")
+    retvector = np.array(sent2vector(sent, word2idx))
     return retvector
 
-
+# TODO
 def format_sent_cnn(sent, model_w2v, sent_len):
     retvector = np.zeros(sent_len, dtype="int32")
     for i, word in enumerate(sent.strip().split(" ")):
         retvector[i] = (word2idx[word] if word in word2idx else word2idx[unknown_word])
     # retvector = np.array(sent2vector(sent, word2idx)).astype("int32")
     return retvector
+
+
+
+def get_batchdata(path, batch, file_names, idxs, model_w2v, sent_len):
+    retx = []
+    rety = []
+    for idx in idxs[batch[0] : batch[1]]:
+        name = file_names[idx]
+        arr = name.split(".")
+        if arr[0] == "GTPC_TUNNEL_PATH_BROKEN":
+            rety.append(0)
+        elif arr[0] == "Paging":
+            rety.append(1)
+        elif arr[0] == "UeAbnormal":
+            rety.append(2)
+        elif arr[0] == "NORMAL":
+            rety.append(3)
+
+        with open(path+name, "rb") as f:
+            for line in f:
+                retx.append(ll for ll in sent2vector(line, model_w2v, sent_len))
+
+    return np.array(retx), np.array(rety)
 
 
 if __name__ == "__main__":
