@@ -1,3 +1,4 @@
+from setting import *
 import numpy as np
 import theano
 from gensim.models import Word2Vec
@@ -63,7 +64,7 @@ def format_sent_cnn(sent, model_w2v, sent_len):
 
 
 
-def get_batchdata(path, batch, file_names, idxs, model_w2v, sent_len):
+def get_batchdata(path, batch, file_names, idxs, model_w2v, sent_len, word_dim):
     retx = []
     rety = []
     for idx in idxs[batch[0] : batch[1]]:
@@ -80,7 +81,7 @@ def get_batchdata(path, batch, file_names, idxs, model_w2v, sent_len):
 
         with open(path+name, "rb") as f:
             for line in f:
-                retx.append(ll for ll in sent2vector(line, model_w2v, sent_len))
+                retx.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
 
     return np.array(retx), np.array(rety)
 

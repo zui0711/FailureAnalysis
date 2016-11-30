@@ -1,10 +1,10 @@
+from setting import *
 from mlp import *
 import sys, os, time, random
 
 from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv
 
-from setting import *
 from utils import *
 
 # image_shape:(batch size, num input feature maps, image height, image width)
@@ -117,7 +117,8 @@ class ConvLayer:
 
 
 
-def mycnn(path, model_w2v, epoch, rng, learning_rate=0.1, batch_size=5*200*10):
+def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_size=5*200*10):
+    rng = np.random.RandomState(123)
     index = T.iscalar()
     x = T.matrix("x")
     y = T.ivector("y")
@@ -175,8 +176,8 @@ def mycnn(path, model_w2v, epoch, rng, learning_rate=0.1, batch_size=5*200*10):
         cost,
         updates=updates,
         givens={
-            x: get_batchdata(path, [0, 9], file_names, train_idx, model_w2v, sent_len)[0],
-            y: get_batchdata(path, [0, 9], file_names, train_idx, model_w2v, sent_len)[1]
+            x: get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[0],
+            y: get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[1]
         }
     )
 
@@ -185,9 +186,11 @@ def mycnn(path, model_w2v, epoch, rng, learning_rate=0.1, batch_size=5*200*10):
 
 
     for ep in xrange(epoch):
-        cost = train_model()
+        for idx in xrange(5):
+            cost = train_model(idx)
 
 
 if __name__ == "__main__":
-    mycnn("data/")
+    model_w2v = load_model(m_path+"../", m_model_w2v_name)
+    mycnn(m_path, model_w2v, m_sent_len, m_word_dim,  m_epoch)
 
