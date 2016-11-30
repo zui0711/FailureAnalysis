@@ -127,8 +127,8 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
     file_num = len(file_names)
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
-    train_idx = file_names_idx[: 7*file_num/10]
-    test_idx = file_names_idx[7*file_num/10 + 1:]
+    train_idx = theano.shared(numpy.array(file_names_idx[: 7*file_num/10], dtype=theano.config.floatX), borrow=True)
+    test_idx = theano.shared(numpy.array(file_names_idx[7*file_num/10 + 1:], dtype=theano.config.floatX), borrow=True)
 
 
 
