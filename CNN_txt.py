@@ -116,12 +116,71 @@ class ConvLayer:
 
 
 
+def load_data(path, model_w2v, sent_len, word_dim):
+    file_names = os.listdir(path)[:100]
+    file_num = len(file_names)
+    file_names_idx = range(file_num)
+    random.shuffle(file_names_idx)
+    train_idx = file_names_idx[: 5 * file_num / 10]
+    valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
+    test_idx = theano.shared(numpy.array(file_names_idx[8 * file_num / 10:], dtype=theano.config.floatX), borrow=True)
+
+    def a(s):
+        print s
+
+    def switch(label, y):
+        try:
+            {"NORMAL": lambda: y.append(0),
+             "GTPC_TUNNEL_PATH_BROKEN": lambda: y.append(1),
+             "Paging": lambda: y.append(2),
+             "UeAbnormal": lambda: y.append(3)
+             }[label]()
+        except KeyError:
+            a("Key not Found")
+
+    train_x = []
+    train_y = []
+    for idx in train_idx:
+        name = file_names[idx]
+        arr = name.split(".")
+        switch(arr[0], train_y)
+
+        with open(path + name, "rb") as f:
+            for line in f:
+                train_x.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
+
+    valid_x = []
+    valid_y = []
+    for idx in valid_idx:
+        name = file_names[idx]
+        arr = name.split(".")
+        switch(arr[0], valid_y)
+
+        with open(path + name, "rb") as f:
+            for line in f:
+                valid_x.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
+
+    test_x = []
+    test_y = []
+    for idx in test_idx:
+        name = file_names[idx]
+        arr = name.split(".")
+        switch(arr[0], test_y)
+
+        with open(path + name, "rb") as f:
+            for line in f:
+                test_x.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
+
+    return train_x, train_y, valid_x, valid_y, test_x, test_y
+
 
 def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_size=5*200*10):
     rng = np.random.RandomState(123)
     index = T.iscalar()
     x = T.matrix("x")
     y = T.ivector("y")
+
+    train_x, train_y, valid_x, valid_y, test_x, test_y = load_data(path, model_w2v, sent_len, word_dim)
 
     file_names = os.listdir(path)
     file_num = len(file_names)
@@ -176,8 +235,8 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
         cost,
         updates=updates,
         givens={
-            x: get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[0],
-            y: get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[1]
+            x: train_x[index * batch_size, (index + 1) * batch_size],
+            y: train_x[index * batch_size, (index + 1) * batch_size]#get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[1]
         }
     )
 
@@ -185,6 +244,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
     print "...training"
 
 
+    #train_num = batch_size/sent_len
     for ep in xrange(epoch):
         for idx in xrange(5):
             cost = train_model(idx)
