@@ -2,6 +2,7 @@ from setting import *
 from mlp import *
 import sys, os, time, random
 
+import theano.tensor as T
 from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv
 
@@ -117,13 +118,17 @@ class ConvLayer:
 
 
 def load_data(path, model_w2v, sent_len, word_dim):
-    file_names = os.listdir(path)[:100]
+    file_names = os.listdir(path)
     file_num = len(file_names)
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
+
+    file_names_idx = file_names_idx[:100]
+    file_num = 100
+
     train_idx = file_names_idx[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
-    test_idx = theano.shared(numpy.array(file_names_idx[8 * file_num / 10:], dtype=theano.config.floatX), borrow=True)
+    test_idx = file_names_idx[8 * file_num / 10:]
 
     def a(s):
         print s
@@ -138,40 +143,57 @@ def load_data(path, model_w2v, sent_len, word_dim):
         except KeyError:
             a("Key not Found")
 
-    train_x = []
     train_y = []
     for idx in train_idx:
         name = file_names[idx]
         arr = name.split(".")
+        if arr[1] == "-1" or arr[1] == "0":
+            continue
         switch(arr[0], train_y)
 
         with open(path + name, "rb") as f:
             for line in f:
-                train_x.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
+                if locals().has_key("train_x"):
+                    train_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                else:
+                    train_x = sent2vector(line, model_w2v, sent_len, word_dim)
 
-    valid_x = []
     valid_y = []
     for idx in valid_idx:
         name = file_names[idx]
         arr = name.split(".")
+        if arr[1] == "-1" or arr[1] == "0":
+            continue
         switch(arr[0], valid_y)
 
         with open(path + name, "rb") as f:
             for line in f:
-                valid_x.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
+                if locals().has_key("valid_x"):
+                    valid_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                else:
+                    valid_x = sent2vector(line, model_w2v, sent_len, word_dim)
 
-    test_x = []
     test_y = []
     for idx in test_idx:
         name = file_names[idx]
         arr = name.split(".")
+        if arr[1] == "-1" or arr[1] == "0":
+            continue
         switch(arr[0], test_y)
 
         with open(path + name, "rb") as f:
             for line in f:
-                test_x.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
+                if locals().has_key("valid_x"):
+                    valid_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                else:
+                    valid_x = sent2vector(line, model_w2v, sent_len, word_dim)
 
-    return train_x, train_y, valid_x, valid_y, test_x, test_y
+    return theano.shared(np.array(train_x, dtype=theano.config.floatX), borrow=True), \
+           T.cast(theano.shared(np.asarray(train_y, dtype=theano.config.floatX), borrow=True), "int32"), \
+           theano.shared(np.array(valid_x, dtype=theano.config.floatX), borrow=True), \
+           T.cast(theano.shared(np.asarray(valid_y, dtype=theano.config.floatX), borrow=True), "int32"), \
+           theano.shared(np.array(test_x, dtype=theano.config.floatX), borrow=True), \
+           T.cast(theano.shared(numpy.asarray(test_y, dtype=theano.config.floatX), borrow=True), "int32")
 
 
 def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_size=5*200*10):
@@ -186,10 +208,6 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
     file_num = len(file_names)
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
-    train_idx = theano.shared(numpy.array(file_names_idx[: 7*file_num/10], dtype=theano.config.floatX), borrow=True)
-    test_idx = theano.shared(numpy.array(file_names_idx[7*file_num/10 + 1:], dtype=theano.config.floatX), borrow=True)
-
-
 
     print "... building the model"
     # data 1000 sentences * 10
@@ -205,7 +223,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
         rng,
         input=layer0_input,
         image_shape=(batch_size, 1, 20, 50),
-        filter_shape=(1, 1, 2, 50),
+        filter_shape=(1, 1, 3, 50),
         poolsize=(1, 5)
     )
 
@@ -235,8 +253,8 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
         cost,
         updates=updates,
         givens={
-            x: train_x[index * batch_size, (index + 1) * batch_size],
-            y: train_x[index * batch_size, (index + 1) * batch_size]#get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[1]
+            x: train_x[index * sent_len*1000*10: (index + 1) * sent_len*1000*10],
+            y: train_y[index * 10: (index + 1) * 10]#get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[1]
         }
     )
 
@@ -248,9 +266,10 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
     for ep in xrange(epoch):
         for idx in xrange(5):
             cost = train_model(idx)
+            print cost
 
 
 if __name__ == "__main__":
-    model_w2v = load_model(m_path+"../", m_model_w2v_name)
+    model_w2v = load_model(m_path+"../../", m_model_w2v_name)
     mycnn(m_path, model_w2v, m_sent_len, m_word_dim,  m_epoch)
 
