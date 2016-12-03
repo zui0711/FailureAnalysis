@@ -123,8 +123,8 @@ def load_data(path, model_w2v, sent_len, word_dim):
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
 
-    file_names_idx = file_names_idx[:100]
-    file_num = 100
+    file_names_idx = file_names_idx[:1]
+    file_num = 1
 
     train_idx = file_names_idx[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
@@ -183,17 +183,17 @@ def load_data(path, model_w2v, sent_len, word_dim):
 
         with open(path + name, "rb") as f:
             for line in f:
-                if locals().has_key("valid_x"):
-                    valid_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                if locals().has_key("test_x"):
+                    test_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
                 else:
-                    valid_x = sent2vector(line, model_w2v, sent_len, word_dim)
+                    test_x = sent2vector(line, model_w2v, sent_len, word_dim)
 
     return theano.shared(np.array(train_x, dtype=theano.config.floatX), borrow=True), \
            T.cast(theano.shared(np.asarray(train_y, dtype=theano.config.floatX), borrow=True), "int32"), \
            theano.shared(np.array(valid_x, dtype=theano.config.floatX), borrow=True), \
            T.cast(theano.shared(np.asarray(valid_y, dtype=theano.config.floatX), borrow=True), "int32"), \
            theano.shared(np.array(test_x, dtype=theano.config.floatX), borrow=True), \
-           T.cast(theano.shared(numpy.asarray(test_y, dtype=theano.config.floatX), borrow=True), "int32")
+           T.cast(theano.shared(np.asarray(test_y, dtype=theano.config.floatX), borrow=True), "int32")
 
 
 def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_size=5*200*10):
