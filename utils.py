@@ -33,12 +33,16 @@ def sent2vector(sentence, model_w2v, sent_len, word_dim):
     thislen = len(sentence.split())
     if thislen > sent_len:
         thislen = sent_len
-    for word in sentence.strip().split(" "):
+    for i, word in enumerate(sentence.strip().split(" ")):
+        if i == sent_len:
+            break
         if word in model_w2v:
-            retvector.append(model_w2v[word])
+            retvector.append(model_w2v[word].tolist())
+        else:
+            thislen -= 1
     for i in xrange(sent_len - thislen):
-        retvector.append(np.zeros(word_dim))
-    return np.array(retvector)
+        retvector.extend([[0 for i in xrange(word_dim)]])
+    return retvector
 
 """
 def vector2sent(vector, idx2word):
