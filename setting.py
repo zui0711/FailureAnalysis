@@ -9,7 +9,7 @@ m_word_dim = 50
 m_batch_size = 10
 
 #m_path = "data/network_diagnosis_data/cut1000/"
-m_path = "/media/zui/work/NETWORK/network_diagnosis_data/"
+m_path = "data/network_diagnosis_data/"
 m_model_w2v_name = "word_emb_size50wind100count100iter30"
 m_epoch = 5
 
@@ -21,14 +21,6 @@ m_labels = ["NORMAL",
 m_names = ["BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1",
            "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1",
            "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1",
-           "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1"]
-#model_w2v = Word2Vec.load(path + "word_emb_size50wind100count100iter30")
+           "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"]
 
-#print model_w2v
-#E = np.eye(dic_size + 1, dic_size + 1).astype(theano.config.floatX)
-
-_learning_rate = 0.05
-
-#idx2word, word2idx = load_dic("data/dic.txt", dic_size)
-
-# print idx2word
+m_learning_rate = 0.01

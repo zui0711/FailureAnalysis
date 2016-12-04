@@ -172,7 +172,7 @@ def cut_data(path, name, label, iflabel=True):
                      "EPU_PORT_CONGESTION"]
         count = -1
         f = open(path + name + "/clean.txt", "rb")
-        contxt = f.readlines()[:10000]
+        contxt = f.readlines()
 
         filename = path + "cut1000/unlabeled/"
         if not os.path.exists(filename):
