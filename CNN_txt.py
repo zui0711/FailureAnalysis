@@ -121,12 +121,12 @@ def load_data(path, model_w2v, sent_len, word_dim):
     file_names = os.listdir(path)
     file_num = len(file_names)
     file_names_idx = range(file_num)
-    random.shuffle(file_names_idx)
+    #random.shuffle(file_names_idx)
 
-    file_names_idx = file_names_idx[:1]
-    file_num = 1
+    file_names_idx = file_names_idx[:15]
+    file_num = 15
 
-    train_idx = file_names_idx[: 5 * file_num / 10]
+    train_idx = file_names_idx#[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
     test_idx = file_names_idx[8 * file_num / 10:]
 
@@ -202,12 +202,15 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
     x = T.matrix("x")
     y = T.ivector("y")
 
+    t1 = time.clock()
     train_x, train_y, valid_x, valid_y, test_x, test_y = load_data(path, model_w2v, sent_len, word_dim)
 
     file_names = os.listdir(path)
     file_num = len(file_names)
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
+
+    t2 = time.clock()
 
     print "... building the model"
     # data 1000 sentences * 10
@@ -258,14 +261,15 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
         }
     )
 
-
     print "...training"
 
 
     #train_num = batch_size/sent_len
     for ep in xrange(epoch):
         for idx in xrange(5):
+            t3 = time.clock()
             cost = train_model(idx)
+            t4 = time.clock()
             print cost
 
 
