@@ -179,13 +179,12 @@ def cut_data(path, name, label, iflabel=True):
             os.mkdir(filename)
 
         line_count = 0
-        newname = filename + label + "."
-        wwf = open(newname + str(count) + ".txt", "wb")
+        wwf = open(filename + ".".join([label, str(count), "txt"]), "wb")
         for line in contxt:
             if line_count % 1000 == 0:
                 wwf.close()
                 count += 1
-                wwf = open(newname + str(count) + ".txt", "wb")
+                wwf = open(filename + ".".join([label, str(count), "txt"]), "wb")
 
             arr = line.split()
             write = True
@@ -198,8 +197,14 @@ def cut_data(path, name, label, iflabel=True):
                 wwf.write(line)
         print count
 
+        for num in ["0", "-1", str(count)]:
+            nn = filename + ".".join([label, num, "txt"])
+            if os.path.exists(nn):
+                print "remove   " + nn
+                remove_file(nn)
 
 
+# TODO
 def save_embdding_data(path, model_w2v, sent_len, word_dim):
     file_names = os.listdir(path)
     file_num = len(file_names)
@@ -317,10 +322,3 @@ if __name__ == "__main__":
     for i, name in enumerate(m_names):
         #get_text(m_path + name, part=False)
         cut_data(m_path, name, m_labels[i], False)
-
-    for name in m_labels:
-        for num in ["0", "-1"]:
-            nn = m_path+"cut1000/unlabeled/" + ".".join([name, num, "txt"])
-            if os.path.exists(nn):
-                print "remove   " + nn
-                remove_file(nn)

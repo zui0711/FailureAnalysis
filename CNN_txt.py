@@ -126,7 +126,7 @@ def load_data(path, model_w2v, sent_len, word_dim):
     file_names_idx = file_names_idx[:200]
     file_num = 200
 
-    train_idx = file_names_idx#[: 5 * file_num / 10]
+    train_idx = file_names_idx[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
     test_idx = file_names_idx[8 * file_num / 10:]
 
@@ -267,7 +267,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     #train_num = batch_size/sent_len
     for ep in xrange(epoch):
         print "epoch = ", ep
-        for idx in xrange(10):
+        for idx in xrange(5):
             t3 = time.clock()
             cost = train_model(idx)
             t4 = time.clock()
@@ -277,5 +277,5 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
 
 if __name__ == "__main__":
     model_w2v = load_model(m_path, m_model_w2v_name)
-    mycnn(m_path+"cut1000/unlabeled/", model_w2v, m_sent_len, m_word_dim,  m_epoch, m_learning_rate)
+    mycnn(m_path+"cut1000/unlabeled/", model_w2v, m_sent_len, m_word_dim, m_epoch, m_learning_rate)
 
