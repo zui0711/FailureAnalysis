@@ -22,13 +22,5 @@ m_names = ["BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1",
            "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1",
            "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1",
            "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1"]
-#model_w2v = Word2Vec.load(path + "word_emb_size50wind100count100iter30")
 
-#print model_w2v
-#E = np.eye(dic_size + 1, dic_size + 1).astype(theano.config.floatX)
-
-_learning_rate = 0.05
-
-#idx2word, word2idx = load_dic("data/dic.txt", dic_size)
-
-# print idx2word
+m_learning_rate = 0.01
