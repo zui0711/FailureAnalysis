@@ -1,5 +1,11 @@
 # coding=utf-8
 import os
+import theano
+import theano.tensor as T
+from setting import *
+from utils import *
+import random
+import cPickle as pickle
 
 FORMATLETTER = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
 
@@ -140,7 +146,7 @@ def cut_data(path, name, label, iflabel=True):
                 nnew.append(n)
                 nbegin = n
 
-        filename = path + "cut/labeled/"
+        filename = path + "cut1000/labeled/"
         if not os.path.exists(filename):
             os.mkdir(filename)
 
@@ -166,16 +172,17 @@ def cut_data(path, name, label, iflabel=True):
                      "EPU_PORT_CONGESTION"]
         count = -1
         f = open(path + name + "/clean.txt", "rb")
-        contxt = f.readlines()
+        contxt = f.readlines()[:10000]
 
-        filename = path + "cut/unlabeled/"
+        filename = path + "cut1000/unlabeled/"
         if not os.path.exists(filename):
             os.mkdir(filename)
 
+        line_count = 0
         newname = filename + label + "."
         wwf = open(newname + str(count) + ".txt", "wb")
-        for i, line in enumerate(contxt):
-            if i % 14000 == 0:
+        for line in contxt:
+            if line_count % 1000 == 0:
                 wwf.close()
                 count += 1
                 wwf = open(newname + str(count) + ".txt", "wb")
@@ -187,12 +194,106 @@ def cut_data(path, name, label, iflabel=True):
                     write = False
                     break
             if write:
+                line_count += 1
                 wwf.write(line)
         print count
 
 
+
+def save_embdding_data(path, model_w2v, sent_len, word_dim):
+    file_names = os.listdir(path)
+    file_num = len(file_names)
+    file_names_idx = range(file_num)
+    random.shuffle(file_names_idx)
+
+    file_names_idx = file_names_idx[:100]
+    file_num = 100
+
+    train_idx = file_names_idx[: 5 * file_num / 10]
+    valid_idx = file_names_idx[5 * file_num / 10: 8 * file_num / 10]
+    test_idx = file_names_idx[8 * file_num / 10:]
+
+    def a(s):
+        print s
+
+    def switch(label, y):
+        try:
+            {"NORMAL": lambda: y.append(0),
+             "GTPC_TUNNEL_PATH_BROKEN": lambda: y.append(1),
+             "Paging": lambda: y.append(2),
+             "UeAbnormal": lambda: y.append(3)
+             }[label]()
+        except KeyError:
+            a("Key not Found")
+
+    train_y = []
+    for idx in train_idx:
+        name = file_names[idx]
+        arr = name.split(".")
+        if arr[1] == "-1" or arr[1] == "0":
+            continue
+        switch(arr[0], train_y)
+
+        with open(path + name, "rb") as f:
+            for line in f:
+                if locals().has_key("train_x"):
+                    train_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                else:
+                    train_x = sent2vector(line, model_w2v, sent_len, word_dim)
+
+    valid_y = []
+    for idx in valid_idx:
+        name = file_names[idx]
+        arr = name.split(".")
+        if arr[1] == "-1" or arr[1] == "0":
+            continue
+        switch(arr[0], valid_y)
+
+        with open(path + name, "rb") as f:
+            for line in f:
+                if locals().has_key("valid_x"):
+                    valid_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                else:
+                    valid_x = sent2vector(line, model_w2v, sent_len, word_dim)
+
+    test_y = []
+    for idx in test_idx:
+        name = file_names[idx]
+        arr = name.split(".")
+        if arr[1] == "-1" or arr[1] == "0":
+            continue
+        switch(arr[0], test_y)
+
+        with open(path + name, "rb") as f:
+            for line in f:
+                if locals().has_key("test_x"):
+                    test_x.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                else:
+                    test_x = sent2vector(line, model_w2v, sent_len, word_dim)
+
+    with open(path+"../embdding_data.pk", "wb") as f:
+        pickle.dump(train_x, f)
+        pickle.dump(train_y, f)
+        pickle.dump(valid_y, f)
+        pickle.dump(train_x, f)
+        pickle.dump(test_x, f)
+        pickle.dump(test_y, f)
+
+"""
+    return theano.shared(np.array(train_x, dtype=theano.config.floatX), borrow=True), \
+           T.cast(theano.shared(np.asarray(train_y, dtype=theano.config.floatX), borrow=True), "int32"), \
+           theano.shared(np.array(valid_x, dtype=theano.config.floatX), borrow=True), \
+           T.cast(theano.shared(np.asarray(valid_y, dtype=theano.config.floatX), borrow=True), "int32"), \
+           theano.shared(np.array(test_x, dtype=theano.config.floatX), borrow=True), \
+           T.cast(theano.shared(np.asarray(test_y, dtype=theano.config.floatX), borrow=True), "int32")
+"""
+
+def remove_file(path_file_name):
+    os.remove(path_file_name)
+
+
 if __name__ == "__main__":
-    path = "data/network_diagnosis_data/"
+    #path = "data/network_diagnosis_data/"
 
     # name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
     # seperate_data(path, name)
@@ -200,18 +301,26 @@ if __name__ == "__main__":
     # cut_data("data/network_diagnosis_data/", "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1", "NORMAL", True)
     # cut_data("data/network_diagnosis_data/", "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1", "NORMAL", True)
 
-    #names = ["BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1",
-    #         "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1",
-    #         "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"]
-
     #for name in names:
     #    get_text_part(path + name, 10)
     #    get_dic_part(path + name, 10)
     #name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
     #name = "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1"
     #name = "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1"
-    name = "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
-    get_text(path + name, part=False)
-    get_dic(path + name, part=False)
+    #name = "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
+    #get_text(path + name, part=False)
+    #get_dic(path + name, part=False)
 
-    cut_data(path, name, "Paging", iflabel=False)
+    #cut_data(path, name, "Paging", iflabel=False)
+    #model_w2v = load_model(m_path+"../../", m_model_w2v_name)
+    #save_embdding_data(m_path, model_w2v, m_sent_len, m_word_dim)
+    for i, name in enumerate(m_names):
+        #get_text(m_path + name, part=False)
+        cut_data(m_path, name, m_labels[i], False)
+
+    for name in m_labels:
+        for num in ["0", "-1"]:
+            nn = m_path+"cut1000/unlabeled/" + ".".join([name, num, "txt"])
+            if os.path.exists(nn):
+                print "remove   " + nn
+                remove_file(nn)
