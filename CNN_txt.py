@@ -121,12 +121,12 @@ def load_data(path, model_w2v, sent_len, word_dim):
     file_names = os.listdir(path)
     file_num = len(file_names)
     file_names_idx = range(file_num)
-    #random.shuffle(file_names_idx)
+    random.shuffle(file_names_idx)
 
-    file_names_idx = file_names_idx[:15]
-    file_num = 15
+    file_names_idx = file_names_idx[:100]
+    file_num = 100
 
-    train_idx = file_names_idx#[: 5 * file_num / 10]
+    train_idx = file_names_idx[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
     test_idx = file_names_idx[8 * file_num / 10:]
 
@@ -196,7 +196,7 @@ def load_data(path, model_w2v, sent_len, word_dim):
            T.cast(theano.shared(np.asarray(test_y, dtype=theano.config.floatX), borrow=True), "int32")
 
 
-def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_size=5*200*10):
+def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_size=5*200*10):
     rng = np.random.RandomState(123)
     index = T.iscalar()
     x = T.matrix("x")
@@ -266,14 +266,15 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.1, batch_s
 
     #train_num = batch_size/sent_len
     for ep in xrange(epoch):
+        print "epoch = ", ep
         for idx in xrange(5):
             t3 = time.clock()
             cost = train_model(idx)
             t4 = time.clock()
-            print cost
-
+            print idx, " cost = ", cost
+        print "\n"
 
 if __name__ == "__main__":
-    model_w2v = load_model(m_path+"../../", m_model_w2v_name)
-    mycnn(m_path, model_w2v, m_sent_len, m_word_dim,  m_epoch)
+    model_w2v = load_model(m_path, m_model_w2v_name)
+    mycnn(m_path+"cut1000/unlabeled/", model_w2v, m_sent_len, m_word_dim,  m_epoch, m_learning_rate)
 
