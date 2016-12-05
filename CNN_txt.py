@@ -123,8 +123,8 @@ def load_data(path, model_w2v, sent_len, word_dim):
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
 
-    file_names_idx = file_names_idx[:200]
-    file_num = 200
+    file_names_idx = file_names_idx[:600]
+    file_num = 600
 
     train_idx = file_names_idx[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
@@ -188,6 +188,8 @@ def load_data(path, model_w2v, sent_len, word_dim):
                 else:
                     test_x = sent2vector(line, model_w2v, sent_len, word_dim)
 
+    print len(train_idx), len(train_x)
+
     return theano.shared(np.array(train_x, dtype=theano.config.floatX), borrow=True), \
            T.cast(theano.shared(np.asarray(train_y, dtype=theano.config.floatX), borrow=True), "int32"), \
            theano.shared(np.array(valid_x, dtype=theano.config.floatX), borrow=True), \
@@ -211,6 +213,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     random.shuffle(file_names_idx)
 
     t2 = time.clock()
+    print "load_data cost:", t2 - t1, "\n"
 
     print "... building the model"
     # data 1000 sentences * 10
@@ -267,11 +270,11 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     #train_num = batch_size/sent_len
     for ep in xrange(epoch):
         print "epoch = ", ep
-        for idx in xrange(5):
+        for idx in xrange(30):
             t3 = time.clock()
             cost = train_model(idx)
             t4 = time.clock()
-            print idx, " cost = ", cost
+            print idx, t4 - t3, "       cost = ", cost
         print "\n"
 
 
