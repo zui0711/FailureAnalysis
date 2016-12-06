@@ -207,7 +207,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
 
             cost = train_model(trainx, trainy)
             t2 = time.clock()
-            print i, t4 - t3, "       cost = ", cost
+            print i, t2 - t1, "       cost = ", cost
         print "\n"
 
 
