@@ -56,65 +56,6 @@ class LeNetConvPoolLayer_sent:
 
         self.output = T.tanh(pooled_out + self.b.dimshuffle("x", 0, "x", "x"))
 
-class ConvLayer:
-    def __int__(self, rng, input, filter_shape, image_shape):
-        assert image_shape[1] == filter_shape[1]
-        self.input = input
-
-        x = T.matrix("x")
-        y = T.ivector("y")
-
-
-
-        print "... building the model"
-        # data 1000 sentences * 10
-        # word_dim = 50, sent_len = 20, batch_size = 5*200*10
-        # filter(3, 50) => (18, 1)
-        # get 5 sentences  => (18, 5)
-        # pool(1, 5) => (18, 1)
-        # activation
-        # => (10, 1, 200, 18)
-        batch_size = 5 * 200 * 10
-
-        layer0_input = x.reshape((batch_size, 1, 20, 50))
-        layer0 = LeNetConvPoolLayer_sent(
-            rng,
-            input=layer0_input,
-            image_shape=(batch_size, 1, 20, 50),
-            filter_shape=(1, 1, 2, 50),
-            poolsize=(1, 5)
-        )
-
-        layer1_input = layer0.output.reshape((10, 1, 200, 18))
-        layer1_input = layer1_input.flatten(2)
-        layer1 = HiddenLayer(
-            rng,
-            input=layer1_input,
-            n_in=1 * 200 * 18,
-            n_out=10,
-            activation=T.tanh
-        )
-
-        layer2 = LogisticRegression(input=layer1.output, n_in=10, n_out=4)
-
-        cost = layer2.negative_log_likelihood(y)
-        params = layer2.params + layer1.params + layer0.params
-        grads = T.grad(cost, params)
-        updates = [
-            (param_i, param_i - learning_rate * grad_i)
-            for param_i, grad_i in zip(params, grads)
-            ]
-
-        train_model = theano.function(
-            [index],
-            cost,
-            updates=updates,
-            givens={
-                x: train_set_x[index * batch_size: (index + 1) * batch_size],
-                y: train_set_y[index * batch_size: (index + 1) * batch_size]
-            }
-        )
-
 
 
 def load_data(path, model_w2v, sent_len, word_dim):
@@ -123,8 +64,8 @@ def load_data(path, model_w2v, sent_len, word_dim):
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
 
-    file_names_idx = file_names_idx[:600]
-    file_num = 600
+    file_names_idx = file_names_idx[:10]
+    file_num = 10
 
     train_idx = file_names_idx[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
@@ -188,7 +129,7 @@ def load_data(path, model_w2v, sent_len, word_dim):
                 else:
                     test_x = sent2vector(line, model_w2v, sent_len, word_dim)
 
-    print len(train_idx), len(train_x)
+    print "len train_idx, train_x:   ", len(train_idx), len(train_x)
 
     return theano.shared(np.array(train_x, dtype=theano.config.floatX), borrow=True), \
            T.cast(theano.shared(np.asarray(train_y, dtype=theano.config.floatX), borrow=True), "int32"), \
@@ -200,12 +141,16 @@ def load_data(path, model_w2v, sent_len, word_dim):
 
 def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_size=5*200*10):
     rng = np.random.RandomState(123)
-    index = T.iscalar()
+    #index = T.iscalar()
+
     x = T.matrix("x")
     y = T.ivector("y")
 
+    tx = T.matrix("tx")
+    ty = T.ivector("ty")
+
     t1 = time.clock()
-    train_x, train_y, valid_x, valid_y, test_x, test_y = load_data(path, model_w2v, sent_len, word_dim)
+    #train_x, train_y, valid_x, valid_y, test_x, test_y = load_data(path, model_w2v, sent_len, word_dim)
 
     file_names = os.listdir(path)
     file_num = len(file_names)
@@ -218,6 +163,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     print "... building the model"
     # data 1000 sentences * 10
     # word_dim = 50, sent_len = 20, batch_size = 5*200*10
+
     # filter(3, 50) => (18, 1)
     # get 5 sentences  => (18, 5)
     # pool(1, 5) => (18, 1)
@@ -254,27 +200,24 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
         for param_i, grad_i in zip(params, grads)
         ]
 
-    train_model = theano.function(
-        [index],
-        cost,
-        updates=updates,
-        givens={
-            x: train_x[index * sent_len*1000*10: (index + 1) * sent_len*1000*10],
-            y: train_y[index * 10: (index + 1) * 10]#get_batchdata(path, [index, index+9], file_names, train_idx, model_w2v, sent_len, word_dim)[1]
-        }
-    )
+    train_model = theano.function([x, y], cost, updates=updates)
 
     print "...training"
 
+    file_names_idx = file_names_idx[:1000]
 
     #train_num = batch_size/sent_len
     for ep in xrange(epoch):
         print "epoch = ", ep
-        for idx in xrange(30):
+        for i in xrange(100):
             t3 = time.clock()
-            cost = train_model(idx)
+
+            this_idxs = file_names_idx[i*10: (i+1)*10]
+            trainx, trainy = get_batchdata(path, file_names, this_idxs, model_w2v, sent_len, word_dim)
+
+            cost = train_model(trainx, trainy)
             t4 = time.clock()
-            print idx, t4 - t3, "       cost = ", cost
+            print i, t4 - t3, "       cost = ", cost
         print "\n"
 
 

@@ -1,6 +1,7 @@
 from setting import *
 import numpy as np
 import theano
+import theano.tensor as T
 from gensim.models import Word2Vec
 
 unknown_word = "UNKNOWN"
@@ -37,57 +38,61 @@ def sent2vector(sentence, model_w2v, sent_len, word_dim):
         if i == sent_len:
             break
         if word in model_w2v:
-            retvector.append(model_w2v[word].tolist())
+            retvector.append(model_w2v[word])
         else:
             thislen -= 1
     for i in xrange(sent_len - thislen):
         retvector.extend([[0 for i in xrange(word_dim)]])
     return retvector
 
-"""
-def vector2sent(vector, idx2word):
-    sentence = [idx2word[word] for word in vector]
-    return " ".join(sentence)
-"""
 
 # TODO
 def format_sent(sent, word2idx, sent_len):
-    # retvector = np.zeros(sent_len)
-    # for i, word in enumerate(sent.strip().split(" ")):
-    #    retvector[i] = (word2idx[word] if word in word2idx else word2idx[unknown_word])
     retvector = np.array(sent2vector(sent, word2idx))
     return retvector
+
 
 # TODO
 def format_sent_cnn(sent, model_w2v, sent_len):
     retvector = np.zeros(sent_len, dtype="int32")
     for i, word in enumerate(sent.strip().split(" ")):
         retvector[i] = (word2idx[word] if word in word2idx else word2idx[unknown_word])
-    # retvector = np.array(sent2vector(sent, word2idx)).astype("int32")
     return retvector
 
 
+def get_batchdata(path, file_names, idxs, model_w2v, sent_len, word_dim):
+    def a(s):
+        print s
 
-def get_batchdata(path, batch, file_names, idxs, model_w2v, sent_len, word_dim):
-    retx = []
+    def switch(label, y):
+        try:
+            {"NORMAL": lambda: y.append(0),
+             "GTPC_TUNNEL_PATH_BROKEN": lambda: y.append(1),
+             "Paging": lambda: y.append(2),
+             "UeAbnormal": lambda: y.append(3)
+             }[label]()
+        except KeyError:
+            a("Key not Found")
+
     rety = []
-    for idx in idxs[batch[0] : batch[1]]:
+    for idx in idxs:
         name = file_names[idx]
         arr = name.split(".")
-        if arr[0] == "GTPC_TUNNEL_PATH_BROKEN":
-            rety.append(0)
-        elif arr[0] == "Paging":
-            rety.append(1)
-        elif arr[0] == "UeAbnormal":
-            rety.append(2)
-        elif arr[0] == "NORMAL":
-            rety.append(3)
+        if arr[1] == "-1" or arr[1] == "0":
+            continue
+        switch(arr[0], rety)
 
-        with open(path+name, "rb") as f:
+        count = 0
+        with open(path + name, "rb") as f:
             for line in f:
-                retx.append(ll for ll in sent2vector(line, model_w2v, sent_len, word_dim))
+                if locals().has_key("retx"):
+                    retx.extend(sent2vector(line, model_w2v, sent_len, word_dim))
+                else:
+                    retx = sent2vector(line, model_w2v, sent_len, word_dim)
+                count += 1
 
-    return np.array(retx), np.array(rety)
+    return np.array(retx, dtype=theano.config.floatX), \
+           np.array(rety, dtype="int32")
 
 
 if __name__ == "__main__":
