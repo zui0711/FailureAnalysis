@@ -141,24 +141,14 @@ def load_data(path, model_w2v, sent_len, word_dim):
 
 def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_size=5*200*10):
     rng = np.random.RandomState(123)
-    #index = T.iscalar()
 
     x = T.matrix("x")
     y = T.ivector("y")
-
-    tx = T.matrix("tx")
-    ty = T.ivector("ty")
-
-    t1 = time.clock()
-    #train_x, train_y, valid_x, valid_y, test_x, test_y = load_data(path, model_w2v, sent_len, word_dim)
 
     file_names = os.listdir(path)
     file_num = len(file_names)
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
-
-    t2 = time.clock()
-    print "load_data cost:", t2 - t1, "\n"
 
     print "... building the model"
     # data 1000 sentences * 10
@@ -210,13 +200,13 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     for ep in xrange(epoch):
         print "epoch = ", ep
         for i in xrange(100):
-            t3 = time.clock()
+            t1 = time.clock()
 
             this_idxs = file_names_idx[i*10: (i+1)*10]
             trainx, trainy = get_batchdata(path, file_names, this_idxs, model_w2v, sent_len, word_dim)
 
             cost = train_model(trainx, trainy)
-            t4 = time.clock()
+            t2 = time.clock()
             print i, t4 - t3, "       cost = ", cost
         print "\n"
 

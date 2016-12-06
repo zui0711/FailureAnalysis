@@ -91,8 +91,7 @@ def get_batchdata(path, file_names, idxs, model_w2v, sent_len, word_dim):
                     retx = sent2vector(line, model_w2v, sent_len, word_dim)
                 count += 1
 
-    return np.array(retx, dtype=theano.config.floatX), \
-           np.array(rety, dtype="int32")
+    return np.array(retx, dtype=theano.config.floatX), np.array(rety, dtype="int32")
 
 
 if __name__ == "__main__":
