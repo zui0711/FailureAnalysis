@@ -1,5 +1,6 @@
 # coding=utf-8
 import os
+import shutil
 import theano
 import theano.tensor as T
 from setting import *
@@ -130,7 +131,7 @@ def get_dic(filename, part=True, partnum=10):
 def cut_data(path, name, label, iflabel=True):
     if iflabel:
         f = open(path + name + "/clean.txt", "rb")
-        contxt = f.readlines()
+        contxt = f.readlines()[:10000]
 
         num = [] # 包含标签的行
         for i, line in enumerate(contxt):
@@ -170,7 +171,7 @@ def cut_data(path, name, label, iflabel=True):
                      "PROCESS_CPU",
                      "SYSTEM_FLOW_CTRL",
                      "EPU_PORT_CONGESTION"]
-        count = -1
+
         f = open(path + name + "/clean.txt", "rb")
         contxt = f.readlines()
 
@@ -178,13 +179,17 @@ def cut_data(path, name, label, iflabel=True):
         if not os.path.exists(filename):
             os.mkdir(filename)
 
+        count = 0
         line_count = 0
+        file_empty = True
+
         wwf = open(filename + ".".join([label, str(count), "txt"]), "wb")
         for line in contxt:
-            if line_count % 1000 == 0:
+            if line_count % 1000 == 0 and not file_empty:
                 wwf.close()
                 count += 1
                 wwf = open(filename + ".".join([label, str(count), "txt"]), "wb")
+                file_empty = True
 
             arr = line.split()
             write = True
@@ -194,14 +199,17 @@ def cut_data(path, name, label, iflabel=True):
                     break
             if write:
                 line_count += 1
+                file_empty = False
                 wwf.write(line)
         print count
 
-        for num in ["0", "-1", str(count)]:
+        for num in ["0", str(count)]:
             nn = filename + ".".join([label, num, "txt"])
             if os.path.exists(nn):
                 print "remove   " + nn
-                remove_file(nn)
+                shutil.copy(nn, filename+"../delete/"+".".join([label, num, "txt"]))
+                os.remove(nn)
+
 
 
 # TODO
@@ -293,9 +301,6 @@ def save_embdding_data(path, model_w2v, sent_len, word_dim):
            T.cast(theano.shared(np.asarray(test_y, dtype=theano.config.floatX), borrow=True), "int32")
 """
 
-def remove_file(path_file_name):
-    os.remove(path_file_name)
-
 
 if __name__ == "__main__":
     #path = "data/network_diagnosis_data/"
@@ -319,6 +324,11 @@ if __name__ == "__main__":
     #cut_data(path, name, "Paging", iflabel=False)
     #model_w2v = load_model(m_path+"../../", m_model_w2v_name)
     #save_embdding_data(m_path, model_w2v, m_sent_len, m_word_dim)
-    for i, name in enumerate(m_names):
-        #get_text(m_path + name, part=False)
-        cut_data(m_path, name, m_labels[i], False)
+    #for i, name in enumerate(m_names):
+    #    get_text(m_path + name, part=False)
+    #    cut_data(m_path, name, m_labels[i], False)
+    name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1"
+    #"BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
+    #seperate_data(m_path, name, 10)
+    get_text(m_path+name, False)
+    cut_data(m_path, name, "UeAbnormal", False)
