@@ -128,7 +128,13 @@ def get_dic(filename, part=True, partnum=10):
 
 
 # 样本分割
-def cut_data(path, name, label, iflabel=True):
+def cut_data(path, name, label, iflabel=False, cut_num=1000):
+    # path 路径
+    # name 文件名
+    # label 样本区分标签
+    # iflabel 是否按照错误标签分割
+    # cut_num 仅当iflabel=True使用,切割得到的样本行数
+
     if iflabel:
         f = open(path + name + "/clean.txt", "rb")
         contxt = f.readlines()[:10000]
@@ -175,20 +181,23 @@ def cut_data(path, name, label, iflabel=True):
         f = open(path + name + "/clean.txt", "rb")
         contxt = f.readlines()
 
-        filename = path + "cut1000/unlabeled/"
+        filename = path + "cut" + str(cut_num) + "/unlabeled/" + label + "/"
         if not os.path.exists(filename):
-            os.mkdir(filename)
+            os.makedirs(filename)
 
         count = 0
+        # 文件计数器
         line_count = 0
+        # 文本行数计数器
         file_empty = True
+        # 是否为空文件
 
-        wwf = open(filename + ".".join([label, str(count), "txt"]), "wb")
+        wwf = open(filename + ".".join([str(count), "txt"]), "wb")
         for line in contxt:
-            if line_count % 1000 == 0 and not file_empty:
+            if line_count % cut_num == 0 and not file_empty:
                 wwf.close()
                 count += 1
-                wwf = open(filename + ".".join([label, str(count), "txt"]), "wb")
+                wwf = open(filename + ".".join([str(count), "txt"]), "wb")
                 file_empty = True
 
             arr = line.split()
@@ -204,11 +213,15 @@ def cut_data(path, name, label, iflabel=True):
         print count
 
         for num in ["0", str(count)]:
-            nn = filename + ".".join([label, num, "txt"])
-            if os.path.exists(nn):
-                print "remove   " + nn
-                shutil.copy(nn, filename+"../delete/"+".".join([label, num, "txt"]))
+            nn = filename + ".".join([num, "txt"])
+            assert os.path.exists(nn)
+            del_path = filename + "../../delete/"
+            if os.path.exists(del_path):
+                shutil.copy(nn, del_path + ".".join([label, num, "txt"]))
                 os.remove(nn)
+                print "remove   " + nn
+            else:
+                os.makedirs(del_path)
 
 
 
@@ -324,11 +337,11 @@ if __name__ == "__main__":
     #cut_data(path, name, "Paging", iflabel=False)
     #model_w2v = load_model(m_path+"../../", m_model_w2v_name)
     #save_embdding_data(m_path, model_w2v, m_sent_len, m_word_dim)
-    #for i, name in enumerate(m_names):
+    for i, name in enumerate(m_names):
     #    get_text(m_path + name, part=False)
-    #    cut_data(m_path, name, m_labels[i], False)
-    name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1"
+        cut_data(m_path, name, m_labels[i], False, 500)
+    #name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1"
     #"BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
     #seperate_data(m_path, name, 10)
-    get_text(m_path+name, False)
-    cut_data(m_path, name, "UeAbnormal", False)
+    #get_text(m_path+name, False)
+    #cut_data(m_path, name, "UeAbnormal", False)
