@@ -57,7 +57,7 @@ class LeNetConvPoolLayer_sent:
         self.output = T.tanh(pooled_out + self.b.dimshuffle("x", 0, "x", "x"))
 
 
-
+"""
 def load_data(path, model_w2v, sent_len, word_dim):
     file_names = os.listdir(path)
     file_num = len(file_names)
@@ -70,19 +70,6 @@ def load_data(path, model_w2v, sent_len, word_dim):
     train_idx = file_names_idx[: 5 * file_num / 10]
     valid_idx = file_names_idx[5 * file_num / 10 : 8 * file_num / 10]
     test_idx = file_names_idx[8 * file_num / 10:]
-
-    def a(s):
-        print s
-
-    def switch(label, y):
-        try:
-            {"NORMAL": lambda: y.append(0),
-             "GTPC_TUNNEL_PATH_BROKEN": lambda: y.append(1),
-             "Paging": lambda: y.append(2),
-             "UeAbnormal": lambda: y.append(3)
-             }[label]()
-        except KeyError:
-            a("Key not Found")
 
     train_y = []
     for idx in train_idx:
@@ -137,7 +124,7 @@ def load_data(path, model_w2v, sent_len, word_dim):
            T.cast(theano.shared(np.asarray(valid_y, dtype=theano.config.floatX), borrow=True), "int32"), \
            theano.shared(np.array(test_x, dtype=theano.config.floatX), borrow=True), \
            T.cast(theano.shared(np.asarray(test_y, dtype=theano.config.floatX), borrow=True), "int32")
-
+"""
 
 def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_size=5*200*10):
     rng = np.random.RandomState(123)
@@ -149,6 +136,16 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     file_num = len(file_names)
     file_names_idx = range(file_num)
     random.shuffle(file_names_idx)
+
+    file_names = []
+    this_path = path + "cut500/unlabeled/"
+    for dir_name in os.listdir(this_path):
+        for file_name in os.listdir(this_path + dir_name):
+            file_names.append(".".join([dir_name, file_name]))
+    file_num = len(file_names)
+    file_names_idx = range(file_num)
+    random.shuffle(file_names_idx)
+
 
     print "... building the model"
     # data 1000 sentences * 10
@@ -203,7 +200,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
             t1 = time.clock()
 
             this_idxs = file_names_idx[i*10: (i+1)*10]
-            trainx, trainy = get_batchdata(path, file_names, this_idxs, model_w2v, sent_len, word_dim)
+            trainx, trainy = get_batchdata(this_path, file_names, this_idxs, model_w2v, sent_len, word_dim)
 
             cost = train_model(trainx, trainy)
             t2 = time.clock()

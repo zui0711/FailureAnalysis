@@ -78,8 +78,7 @@ def get_batchdata(path, file_names, idxs, model_w2v, sent_len, word_dim):
     for idx in idxs:
         name = file_names[idx]
         arr = name.split(".")
-        if arr[1] == "-1" or arr[1] == "0":
-            continue
+        this_file_name = ".".join([arr[1], arr[2]])
         switch(arr[0], rety)
 
         count = 0
