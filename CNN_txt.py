@@ -138,7 +138,7 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     random.shuffle(file_names_idx)
 
     file_names = []
-    this_path = path + "cut500/unlabeled/"
+    this_path = path + "cut500/all/"
     for dir_name in os.listdir(this_path):
         for file_name in os.listdir(this_path + dir_name):
             file_names.append(".".join([dir_name, file_name]))
@@ -196,13 +196,13 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
     #train_num = batch_size/sent_len
     for ep in xrange(epoch):
         print "epoch = ", ep
-        for i in xrange(100):
+        for i in xrange(50):
             t1 = time.clock()
 
-            this_idxs = file_names_idx[i*10: (i+1)*10]
+            this_idxs = file_names_idx[i*20: (i+1)*20]
             trainx, trainy = get_batchdata(this_path, file_names, this_idxs, model_w2v, sent_len, word_dim)
 
-            cost = train_model(trainx, trainy)
+            cost = train_model(trainx, trainy[:10])
             t2 = time.clock()
             print i, t2 - t1, "       cost = ", cost
         print "\n"
@@ -210,5 +210,5 @@ def mycnn(path, model_w2v, sent_len, word_dim, epoch, learning_rate=0.01, batch_
 
 if __name__ == "__main__":
     model_w2v = load_model(m_path, m_model_w2v_name)
-    mycnn(m_path+"cut1000/unlabeled/", model_w2v, m_sent_len, m_word_dim, m_epoch, m_learning_rate)
+    mycnn(m_path, model_w2v, m_sent_len, m_word_dim, m_epoch, m_learning_rate)
 

@@ -3,6 +3,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 from gensim.models import Word2Vec
+import os
 
 unknown_word = "UNKNOWN"
 
@@ -82,7 +83,7 @@ def get_batchdata(path, file_names, idxs, model_w2v, sent_len, word_dim):
         switch(arr[0], rety)
 
         count = 0
-        with open(path + name, "rb") as f:
+        with open(os.path.join(path, arr[0], this_file_name), "rb") as f:
             for line in f:
                 if locals().has_key("retx"):
                     retx.extend(sent2vector(line, model_w2v, sent_len, word_dim))
