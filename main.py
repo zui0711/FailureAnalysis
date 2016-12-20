@@ -81,6 +81,6 @@ def mycnn(path, path_add, model_w2v, sent_len, word_dim, epoch,
 
 if __name__ == "__main__":
     model_w2v = load_model(m_path, m_model_w2v_name)
-    mycnn(m_path, "cut500/all/", model_w2v, imdb_sent_len, m_word_dim, m_epoch, m_learning_rate,
-          imdb_batch_size_o)
+    mycnn(m_path, "cut500/all/", model_w2v, m_sent_len_o, m_word_dim, m_epoch, m_learning_rate,
+          m_batch_size)
 
