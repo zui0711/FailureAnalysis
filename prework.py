@@ -129,11 +129,15 @@ def get_dic(filename, part=True, partnum=10):
 
 # 样本分割
 def cut_data(path, name, label, iflabel=False, cut_num=1000):
-    # path 路径
-    # name 文件名
-    # label 样本区分标签
-    # iflabel 是否按照错误标签分割
-    # cut_num 仅当iflabel=True使用,切割得到的样本行数
+    """
+
+    :param path: 路径
+    :param name: 文件名
+    :param label: 样本区分标签
+    :param iflabel: 是否按照错误标签分割
+    :param cut_num: 仅当iflabel=True使用,切割得到的样本行数
+    :return:
+    """
 
     if iflabel:
         f = open(path + name + "/clean.txt", "rb")

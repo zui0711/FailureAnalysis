@@ -1,5 +1,5 @@
 m_sent_len = 20
-m_sent_len_o = 1000
+m_sent_len_o = 5000
 m_word_dim = 50
 m_batch_size = 100
 m_text_size = 500

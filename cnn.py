@@ -15,8 +15,11 @@ from setting import *
 
 
 # filter_shape:(number of filters, num input feature maps, filter height, filter width)
+#   (filter_num, featuremap_num, filter_len, word_dim)
 # image_shape:(batch size, num input feature maps, image height, image width)
+#   (batch_size, featuremap_num, sent_len, word_dim)
 # poolsize: (#rows, #cols)
+#   (batch_size, filter_num, output row, output col)
 
 class LeNetConvPoolLayer:
     def __init__(self, rng, input, filter_shape, image_shape, poolsize=(2, 2)):
@@ -206,14 +209,18 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=5, dataset="data/mnist.pkl.gz",
 
     print "... building the model"
 
-    layer0_input = x.reshape((batch_size, 1, 36, 36))
+    layer0_input = x.reshape((batch_size, 1, 20, 50))
+    # (filter_num, featuremap_num, filter_len, word_dim)
+    # (batch_size, featuremap_num, sent_len, word_dim)
     layer0 = LeNetConvPoolLayer(
         rng,
         input=layer0_input,
-        image_shape=(batch_size, 1, 36, 36),
-        filter_shape=(nkerns[0], 1, 5, 5),
-        poolsize=(2, 2)
+        image_shape=(batch_size, 1, 20, 50),
+        filter_shape=(nkerns[0], 1, 4, 50),
+        poolsize=(1, 1)
     )
+
+    #layer1_input = layer0.output.reshape((batch_size/2, 1, 2, 50))
     layer1 = LeNetConvPoolLayer(
         rng,
         input=layer0.output,
