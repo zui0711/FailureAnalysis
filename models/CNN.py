@@ -155,14 +155,14 @@ class FourConvCNN:
 
     def save_model(self, outfile):
         f = open(outfile, 'wb')
-        print "saving model... "
+        print("saving model... ")
         for param in self.params:
             #print param.get_value(borrow=True)
             pickle.dump(param.get_value(borrow=True), f, pickle.HIGHEST_PROTOCOL)
 
     def load_model(self, infile):
         f = open(infile, "rb")
-        print "loading model..."
+        print("loading model...")
         for layer in self.layers:
             for p in layer.params:
                 p.set_value(pickle.load(f), borrow=True)
