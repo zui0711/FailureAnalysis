@@ -1,8 +1,10 @@
 # coding=utf-8
-from CNN_txt import *
-from rbm import *
-import time, random
+import random
+import time
 from os.path import join as pjoin
+
+from models.CNN import *
+from models.RBM import *
 
 
 def mycnn(path, path_add, model_w2v, sent_len, word_dim, epoch,
