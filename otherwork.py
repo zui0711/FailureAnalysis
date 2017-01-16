@@ -1,85 +1,103 @@
 # coding=utf-8
 
-import re
-from setting import *
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-from os.path import join as pjoin
+# import re
+# from setting import *
+# import matplotlib.pyplot as plt
+# import numpy as np
+# import os
+from utils import *
+from models.RBM import *
 
-ERRORNAME = ["USER_CONGESTION",
-             "GTPC_TUNNEL_PATH_BROKEN",
-             "PROCESS_CPU",
-             "SYSTEM_FLOW_CTRL",
-             "EPU_PORT_CONGESTION"]
-
-# alltime = {}
-# with open(m_path+"BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1.log", "rb") as f:
-    # con = f.readlines()
-    # for line in con:
-    #     write = False
-    #     arr = line.split()
-    #     for word in arr:
-    #         if word in ERRORNAME:
-    #             write = True
-    #             break
-        # if write:
-        #     time = re.findall(r"\[\d+\.\d+\]", line)
-        #     #s = re.findall(r"\d+\.", time[0])
-        #     thistime = int(re.findall(r"\d+", time[0])[0])
-        #     if thistime in alltime:
-        #         alltime[thistime] += 1
-        #     else:
-        #         alltime[thistime] = 1
-
-# alltime = sorted(alltime.iteritems(), key=lambda x:x[0], reverse=False)
-# for time in alltime:
-#     print time[0], time[1]
-
-
-#X = np.linspace(-np.pi,np.pi,256,endpoint=True)
-#X = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
-
-#(C,S)=np.cos(X),np.sin(X)
-
-# for name in [os.listdir(pjoin(m_path, "ERRORINFO"))[4]]:
-#     arr = name.split("-")
-#     print arr
-#     x_time = []
-#     y_num = []
-#     with open(pjoin(m_path, "ERRORINFO", name), "rb") as f:
-#         con = f.readlines()
-#         for line in con[:50]:
-#             [x, y] = line.split()
-#             x_time.append(x)
-#             y_num.append(y)
-#     plt.plot(np.array(x_time), np.array(y_num))
-#     #plt.xticks(np.linspace(21, 41, 5))
-#     #plt.yticks(np.linspace(0, 6, 3))
+# import cPickle as pickle
 #
-#     plt.xlabel("time/s")
-#     plt.ylabel("count")
-#     plt.show()
+# dic = {}
+# with open("data/log_log.txt", "rb") as f:
+#     context = f.readlines()
+#     for line in context:
+#         sentence = line.split(" ")
+#         for word in sentence:
+#             if word in dic:
+#                 dic[word] += 1
+#             else:
+#                 dic[word] = 1
+#
+# sorted_dic = sorted(dic.items(), key=lambda e: e[1], reverse=True)
+#
+# f = open("outfile", 'wb')
+# pickle.dump(sorted_dic, f, pickle.HIGHEST_PROTOCOL)
 
 
-#plt.plot(X,C)
-#plt.plot(X,S)
-#plt.show()
-x1 = np.linspace(0, 55, 56)
-x2 = np.linspace(21, 51, 6)
-y = np.zeros(56)
-for i in xrange(56):
-    if i in x2:
-        y[i] = 5
+# from __future__ import print_function
+import numpy as np
+np.random.seed(1337)  # for reproducibility
 
-print x1
-print x2
-print y
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation
+from keras.utils import np_utils
+from keras.preprocessing.text import Tokenizer
+import random
 
-plt.plot(x1[20:], y[20:])
-#plt.xticks(np.linspace(20, 60, 41))
-#plt.yticks(np.linspace(0, 6, 4))
+this_path = pjoin(m_path, "cut500/all/")
 
-plt.xlabel("time/s")
-plt.ylabel("count")
-plt.show()
+file_names = []
+for dir_name in os.listdir(this_path):
+    for file_name in os.listdir(pjoin(this_path, dir_name)):
+        file_names.append(".".join([dir_name, file_name]))
+
+file_num = len(file_names)
+file_names_idx = range(file_num)
+random.shuffle(file_names_idx)
+
+train_len = 50
+test_len = 20
+train_idxs = file_names_idx[:train_len]
+test_idxs = file_names_idx[train_len:train_len + test_len]
+
+# batch_size = 500
+# train_num = train_len / batch_size
+# test_num = test_len / batch_size
+
+
+model_w2v = load_model_onehot(m_path, m_model_w2v_name, 100)
+model_rbm = RBM()
+model_rbm.load_model(pjoin(m_path, "rbm_model_2000_800"))
+
+this_idxs = train_idxs#[i * batch_size: (i + 1) * batch_size]
+trainx, trainy = get_batchdata_sent_onehot(this_path, file_names, this_idxs, model_w2v, model_rbm, sent_len=15,
+                                           word_dim=100, text_size=500)
+
+this_idxs = test_idxs#[i * batch_size: (i + 1) * batch_size]
+testx, testy = get_batchdata_sent_onehot(this_path, file_names, this_idxs, model_w2v, model_rbm, sent_len=15,
+                                           word_dim=100, text_size=500)
+
+print('Building model...')
+model = Sequential()
+model.add(Dense(400, input_shape=(400000,)))
+model.add(Activation('relu'))
+model.add(Dense(40, input_shape=(400,)))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(4))
+model.add(Activation('softmax'))
+
+# for ep in xrange(epoch):
+#     print
+#     "epoch = ", ep
+#     costep = 0
+#
+#     for i in xrange(train_num):
+
+
+
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+history = model.fit(trainx, trainy,
+                    nb_epoch=5, batch_size=50,
+                    verbose=1, validation_split=0.1)
+
+score = model.evaluate(testx, testy,
+                       batch_size=20, verbose=1)
+print('Test score:', score[0])
+print('Test accuracy:', score[1])
