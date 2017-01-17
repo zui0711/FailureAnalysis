@@ -39,36 +39,40 @@ import random
 
 this_path = pjoin(m_path, "cut500/all/")
 
-file_names = []
-for dir_name in os.listdir(this_path):
-    for file_name in os.listdir(pjoin(this_path, dir_name)):
-        file_names.append(".".join([dir_name, file_name]))
+# file_names = []
+# for dir_name in os.listdir(this_path):
+#     for file_name in os.listdir(pjoin(this_path, dir_name)):
+#         file_names.append(".".join([dir_name, file_name]))
+#
+# file_num = len(file_names)
+# file_names_idx = range(file_num)
+# random.shuffle(file_names_idx)
+#
+# train_len = 1000
+# test_len = 200
+# train_idxs = file_names_idx[:train_len]
+# test_idxs = file_names_idx[train_len:train_len + test_len]
+#
+# model_w2v = load_model_onehot(m_path, m_model_w2v_name, 100)
+# model_rbm = RBM()
+# model_rbm.load_model(pjoin(m_path, "rbm_model_2000_800"))
+#
+# this_idxs = train_idxs#[i * batch_size: (i + 1) * batch_size]
+# trainx, trainy = get_batchdata_sent_onehot(this_path, file_names, this_idxs, model_w2v, model_rbm, sent_len=15,
+#                                            word_dim=100, text_size=500)
+#
+# this_idxs = test_idxs#[i * batch_size: (i + 1) * batch_size]
+# testx, testy = get_batchdata_sent_onehot(this_path, file_names, this_idxs, model_w2v, model_rbm, sent_len=15,
+#                                            word_dim=100, text_size=500)
+#
+# f = open(pjoin(m_path, "rbm_input"), "wb")
+# pickle.dump([trainx, trainy], f, 1)
+# pickle.dump([testx, testy], f, 1)
 
-file_num = len(file_names)
-file_names_idx = range(file_num)
-random.shuffle(file_names_idx)
+f = open(pjoin(m_path, "rbm_input"), "rb")
+[trainx, trainy] = pickle.load(f)
+[testx, testy] = pickle.load(f)
 
-train_len = 50
-test_len = 20
-train_idxs = file_names_idx[:train_len]
-test_idxs = file_names_idx[train_len:train_len + test_len]
-
-# batch_size = 500
-# train_num = train_len / batch_size
-# test_num = test_len / batch_size
-
-
-model_w2v = load_model_onehot(m_path, m_model_w2v_name, 100)
-model_rbm = RBM()
-model_rbm.load_model(pjoin(m_path, "rbm_model_2000_800"))
-
-this_idxs = train_idxs#[i * batch_size: (i + 1) * batch_size]
-trainx, trainy = get_batchdata_sent_onehot(this_path, file_names, this_idxs, model_w2v, model_rbm, sent_len=15,
-                                           word_dim=100, text_size=500)
-
-this_idxs = test_idxs#[i * batch_size: (i + 1) * batch_size]
-testx, testy = get_batchdata_sent_onehot(this_path, file_names, this_idxs, model_w2v, model_rbm, sent_len=15,
-                                           word_dim=100, text_size=500)
 
 print('Building model...')
 model = Sequential()
@@ -76,7 +80,7 @@ model.add(Dense(400, input_shape=(400000,)))
 model.add(Activation('relu'))
 model.add(Dense(40, input_shape=(400,)))
 model.add(Activation('relu'))
-model.add(Dropout(0.5))
+# model.add(Dropout(0.1))
 model.add(Dense(4))
 model.add(Activation('softmax'))
 
@@ -93,11 +97,20 @@ model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 
-history = model.fit(trainx, trainy,
-                    nb_epoch=5, batch_size=50,
+history = model.fit(trainx.reshape(1000, 400000), np_utils.to_categorical(trainy, 4),
+                    nb_epoch=10, batch_size=50,
                     verbose=1, validation_split=0.1)
 
-score = model.evaluate(testx, testy,
+print(model.get_weights()[-1])
+
+history = model.fit(trainx.reshape(1000, 400000), np_utils.to_categorical(trainy, 4),
+                    nb_epoch=10, batch_size=50,
+                    verbose=1, validation_split=0.1)
+
+print(model.get_weights()[-1])
+
+score = model.evaluate(testx.reshape(200, 400000), np_utils.to_categorical(testy, 4),
                        batch_size=20, verbose=1)
+
 print('Test score:', score[0])
 print('Test accuracy:', score[1])

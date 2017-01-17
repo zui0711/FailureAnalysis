@@ -7,6 +7,7 @@ from gensim.models import Word2Vec
 import os
 import cPickle as pickle
 from os.path import join as pjoin
+import time
 
 unknown_word = "UNKNOWN"
 
@@ -206,7 +207,11 @@ def sent2vec_rbm(sentence, model_w2v, model_rbm, sent_len=15, word_dim=100):
             thislen -= 1
     retvector.extend([[0 for i in xrange(word_dim)] for i in xrange(sent_len - thislen)])
 
-    return model_rbm.propup(np.array(retvector, dtype=theano.config.floatX).reshape(1, sent_len*word_dim))[1].eval().tolist()
+    #return model_rbm.propup(np.array(retvector, dtype=theano.config.floatX).reshape(1, sent_len*word_dim))[1].eval().tolist()
+    def sigmoid(pre):
+        return 1. / (1. + np.exp(-1. *pre))
+    ret = np.dot(np.array(retvector).flatten(), model_rbm.W.get_value()) + model_rbm.hbias.get_value()
+    return sigmoid(ret).tolist()
 
 
 def get_batchdata_sent_onehot(path, file_names, idxs, model_w2v, model_rbm, sent_len, word_dim, text_size):
@@ -233,6 +238,7 @@ def get_batchdata_sent_onehot(path, file_names, idxs, model_w2v, model_rbm, sent
 
     rety = []
     for i, idx in enumerate(idxs):
+        t1 = time.clock()
         print(i)
         name = file_names[idx]
         arr = name.split(".")
@@ -255,6 +261,8 @@ def get_batchdata_sent_onehot(path, file_names, idxs, model_w2v, model_rbm, sent
                     retx = sent2vec_rbm(line, model_w2v, model_rbm, sent_len, word_dim)
             if line_num < text_size:
                retx.extend(np.zeros([(text_size-line_num) * 800]))
+        t2 = time.clock()
+        #print(t2 - t1)
     return np.array(retx, dtype=theano.config.floatX), np.array(rety, dtype="int32")
 
 
