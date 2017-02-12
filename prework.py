@@ -185,7 +185,7 @@ def cut_data(path, name, label, iflabel=False, cut_num=1000):
         f = open(path + name + "/clean.txt", "rb")
         contxt = f.readlines()
 
-        filename = path + "cut" + str(cut_num) + "/unlabeled/" + label + "/"
+        filename = path + "cut" + str(cut_num) + "/all/" + label + "/"
         if not os.path.exists(filename):
             os.makedirs(filename)
 
@@ -227,6 +227,67 @@ def cut_data(path, name, label, iflabel=False, cut_num=1000):
             else:
                 os.makedirs(del_path)
 
+
+def cut_data_recovery(path, name, label):
+    ERRORNAME = ["USER_CONGESTION",
+                 "GTPC_TUNNEL_PATH_BROKEN",
+                 "PROCESS_CPU",
+                 "SYSTEM_FLOW_CTRL",
+                 "EPU_PORT_CONGESTION"]
+
+
+    f = open(path + name + "/clean.txt", "rb")
+    contxt = f.readlines()
+
+    #filename = path + "cut" + str(cut_num) + "/unlabeled/" + label + "/"
+    filename = path + "cut_recovery"
+    if not os.path.exists(filename):
+        os.makedirs(filename)
+
+    count = 0
+    # 文件计数器
+    line_count = 0
+    # 文本行数计数器
+    file_empty = True
+    # 是否为空文件
+
+    #wwf = open(filename + ".".join([str(count), "txt"]), "wb")
+    print(len(contxt))
+    for i, line in enumerate(contxt)[:2000000]:
+        arr = line.split()
+        if "EPU_PORT_CONGESTION" in arr:
+           print("EPU_PORT_CONGESTION")
+        if "EPU_PORT_CONGESTION_RECOVERY" in arr:
+            print(i, "EPU_PORT_CONGESTION_RECOVERY")
+    # for line in contxt:
+    #     if line_count % cut_num == 0 and not file_empty:
+    #         wwf.close()
+    #         count += 1
+    #         wwf = open(filename + ".".join([str(count), "txt"]), "wb")
+    #         file_empty = True
+    #
+    #     arr = line.split()
+    #     write = True
+    #     for word in arr:
+    #         if word in ERRORNAME:
+    #             write = False
+    #             break
+    #     if write:
+    #         line_count += 1
+    #         file_empty = False
+    #         wwf.write(line)
+    # print count
+    #
+    # for num in ["0", str(count)]:
+    #     nn = filename + ".".join([num, "txt"])
+    #     assert os.path.exists(nn)
+    #     del_path = filename + "../../delete/"
+    #     if os.path.exists(del_path):
+    #         shutil.copy(nn, del_path + ".".join([label, num, "txt"]))
+    #         os.remove(nn)
+    #         print "remove   " + nn
+    #     else:
+    #         os.makedirs(del_path)
 
 
 # TODO
@@ -334,18 +395,19 @@ if __name__ == "__main__":
     #name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
     #name = "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1"
     #name = "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1"
-    #name = "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
+    name = "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
     #get_text(path + name, part=False)
     #get_dic(path + name, part=False)
 
     #cut_data(path, name, "Paging", iflabel=False)
     #model_w2v = load_model(m_path+"../../", m_model_w2v_name)
     #save_embdding_data(m_path, model_w2v, m_sent_len, m_word_dim)
-    for i, name in enumerate(m_names):
+    #for i, name in enumerate(m_names):
     #    get_text(m_path + name, part=False)
-        cut_data(m_path, name, m_labels[i], False, 500)
+    #    cut_data(m_path, name, m_labels[i], False, 500)
     #name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1"
     #"BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
     #seperate_data(m_path, name, 10)
     #get_text(m_path+name, False)
     #cut_data(m_path, name, "UeAbnormal", False)
+    cut_data_recovery(m_path, name, "GTPC_TUNNEL_PATH_BROKEN")
