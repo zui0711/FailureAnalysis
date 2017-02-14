@@ -235,12 +235,17 @@ def cut_data_recovery(path, name, label):
                  "SYSTEM_FLOW_CTRL",
                  "EPU_PORT_CONGESTION"]
 
+    ERRORRECOVERY = ["USER_CONGESTION_RECOVERY",
+                     "GTPC_TUNNEL_PATH_RECOVERY",
+                     "PROCESS_CPU_RECOVERY",
+                     "SYSTEM_FLOW_CTRL_RECOVERY",
+                     "EPU_PORT_CONGESTION_RECOVERY"]
 
     f = open(path + name + "/clean.txt", "rb")
     contxt = f.readlines()
 
     #filename = path + "cut" + str(cut_num) + "/unlabeled/" + label + "/"
-    filename = path + "cut_recovery"
+    filename = pjoin(path, "cut_recovery", label)
     if not os.path.exists(filename):
         os.makedirs(filename)
 
@@ -252,13 +257,60 @@ def cut_data_recovery(path, name, label):
     # 是否为空文件
 
     #wwf = open(filename + ".".join([str(count), "txt"]), "wb")
+    ERR_flag = 0
+    REC_flag = 0
+
     print(len(contxt))
-    for i, line in enumerate(contxt)[:2000000]:
+    flags = [0 for i in xrange(len(contxt[:1000000]))]
+    cut_start = []
+    cut_mid = []
+    cut_end = [-1]
+
+    for i, line in enumerate(contxt[:1000000]):
         arr = line.split()
-        if "EPU_PORT_CONGESTION" in arr:
-           print("EPU_PORT_CONGESTION")
-        if "EPU_PORT_CONGESTION_RECOVERY" in arr:
-            print(i, "EPU_PORT_CONGESTION_RECOVERY")
+        for word in arr:
+            if word in ERRORNAME:
+                flags[i] = 1
+                #print(i, word)
+        for word in arr:
+            if word in ERRORRECOVERY:
+                flags[i] = -1
+                #print(i, word)
+
+    write = True
+    for i, f in enumerate(flags):
+        if f == 1:
+            if REC_flag > ERR_flag:
+                write = True
+                cut_end.append(REC_flag)
+            if write:
+                cut_start.append(i)
+                write = False
+            ERR_flag = i
+        elif f == -1:
+            if REC_flag < ERR_flag:
+                cut_mid.append(i)
+            REC_flag = i
+
+
+    print(cut_start, cut_mid, cut_end)
+    #
+    # for i in xrange(len(cut_start)-1):
+    #     nf = open(pjoin(filename,  "normal"+str(i)+".txt"), "wb")
+    #     for line in contxt[cut_end[i]+1: cut_start[i]]:
+    #         nf.write(line)
+    #     ef = open(pjoin(filename,  "error"+str(i)+".txt"), "wb")
+    #     for line in contxt[cut_start[i]: cut_mid[i]-1]:
+    #         ef.write(line)
+    #     rf = open(pjoin(filename, "recovery" + str(i) + ".txt"), "wb")
+    #     for line in contxt[cut_mid[i]:cut_end[i+1]]:
+    #         rf.write(line)
+
+        #if "SYSTEM_FLOW_CTRL" in arr:
+        #    print(i, "SYSTEM_FLOW_CTRL")
+        # if "SYSTEM_FLOW_CTRL_RECOVERY" in arr:
+        #     print(i, "SYSTEM_FLOW_CTRL_RECOVERY")
+
     # for line in contxt:
     #     if line_count % cut_num == 0 and not file_empty:
     #         wwf.close()
@@ -392,8 +444,8 @@ if __name__ == "__main__":
     #for name in names:
     #    get_text_part(path + name, 10)
     #    get_dic_part(path + name, 10)
-    #name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
-    #name = "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1"
+    # name = "BaseLine-BigData_1kUE_20ENB_UeAbnormal-Case_Group_1-Case_1_new_With_Tag"
+    # name = "BaseLine-BigData_1kUE_20ENB_gtpcbreakdown-Case_Group_1-Case_1"
     #name = "BaseLine-BigData_1kUE_20ENB_NORMAL-Case_Group_1-Case_1"
     name = "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1"
     #get_text(path + name, part=False)
@@ -410,4 +462,4 @@ if __name__ == "__main__":
     #seperate_data(m_path, name, 10)
     #get_text(m_path+name, False)
     #cut_data(m_path, name, "UeAbnormal", False)
-    cut_data_recovery(m_path, name, "GTPC_TUNNEL_PATH_BROKEN")
+    cut_data_recovery(m_path, name, "Paging")
