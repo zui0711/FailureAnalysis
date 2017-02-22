@@ -95,7 +95,7 @@ def get_batchdata(path, file_names, idxs, model_w2v, sent_len, word_dim):
 # TODO
 def get_batchdata_sent(path, file_names, idxs, model_w2v, sent_len, word_dim, text_size):
     """
-    text_size个句子
+    text_size个句子，分为词读入
     :param path:
     :param file_names:
     :param idxs:
@@ -105,9 +105,6 @@ def get_batchdata_sent(path, file_names, idxs, model_w2v, sent_len, word_dim, te
     :param text_size:
     :return:
     """
-    def a(s):
-        print s
-
     def switch(label, y):
         try:
             {"NORMAL": lambda: y.append(0),
@@ -116,7 +113,7 @@ def get_batchdata_sent(path, file_names, idxs, model_w2v, sent_len, word_dim, te
              "UeAbnormal": lambda: y.append(3)
              }[label]()
         except KeyError:
-            a("Key not Found")
+            print("Key not Found")
 
     rety = []
     for idx in idxs:
@@ -145,6 +142,7 @@ def get_batchdata_sent(path, file_names, idxs, model_w2v, sent_len, word_dim, te
 
 
 def load_dic(dic_file, dic_size=-1):
+    # 目前没用，手动进行onehot转换操作
     idx2word = []
     word2idx = {}
     i = 0
@@ -177,6 +175,7 @@ def format_sent_cnn(sent, model_w2v, sent_len):
 
 
 def load_model_onehot(path, modelname, dicsize):
+    # 借用word2vec模型，简建立onehot向量
     # dic_size => word_dim
 
     #dicfile = open(pjoin(path, modelname), "rb")
@@ -193,7 +192,7 @@ def load_model_onehot(path, modelname, dicsize):
 
 # TODO
 def sent2vec_rbm(sentence, model_w2v, model_rbm, sent_len=15, word_dim=100):
-    # 使用onehot进行句子转向量
+    # 利用rbm进行句子转向量
     retvector = []
     thislen = len(sentence.split())
     if thislen > sent_len:
@@ -216,7 +215,7 @@ def sent2vec_rbm(sentence, model_w2v, model_rbm, sent_len=15, word_dim=100):
 
 def get_batchdata_sent_onehot(path, file_names, idxs, model_w2v, model_rbm, sent_len, word_dim, text_size):
     """
-
+    batch 分rbm转换后的句子进行读入，其中使用onehot进行句子到向量转换
     :param path:
     :param file_names:
     :param idxs:
