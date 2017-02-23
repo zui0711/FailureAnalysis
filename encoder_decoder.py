@@ -128,14 +128,14 @@ def load_data(filep, names_idx):
     input_sen = []
     for n in names_idx:
         ils = ""
-        inf = open(pjoin(filep, str(n)+".txt"))
+        inf = open(pjoin(filep, "input", str(n)+".txt"))
         for line in inf.readlines():
             ils = " ".join([ils, line])
         input_sen.append(ils)
     output_sen = []
     for n in names_idx:
         ols = ""
-        outf = open(pjoin(filep, str(n) + ".txt"))
+        outf = open(pjoin(filep, "output", str(n) + ".txt"))
         for line in outf.readlines():
             ols = " ".join([ols, line])
         output_sen.append(ols)
@@ -170,7 +170,7 @@ def io_list(input, output):
 
 
 def main():
-    filep = pjoin(m_path, "cut_recovery_10")
+    filep = pjoin(m_path, "cut_recovery_10", "Paging")
     file_num = len(os.listdir(pjoin(filep, "input")))
 
 
@@ -178,8 +178,8 @@ def main():
     random.shuffle(file_names_idx)
     # train_names_idx = file_names_idx[:file_num/7]
     # test_names_idx = file_names_idx[file_num/7+1:]
-    train_names_idx = file_names_idx[:1000]
-    test_names_idx = file_names_idx[1001:1500]
+    train_names_idx = file_names_idx[:5000]
+    test_names_idx = file_names_idx[5001:6000]
 
 
     vocab = load_vocab(pjoin(m_path, "BaseLine-BigData_1kUE_20ENB_paging-Case_Group_1-Case_1", "dic.txt"))
@@ -191,7 +191,7 @@ def main():
     input_maxlen = 200
     output_maxlen = 200
     output_dim = vocab_size
-    hidden_dim = 20
+    hidden_dim = 300
 
     # print('-')
     # print('Vocab size:', vocab_size, 'unique words')
@@ -243,12 +243,12 @@ def main():
     time_end = time.time()
     print('Compiled, cost time:%fsecond!' % (time_end - time_start))
 
-    for iter_num in range(50):
+    for iter_num in range(10):
         input_sen, output_sen = load_data(filep, train_names_idx)
         input_list, output_list = io_list(input_sen, output_sen)
-        inputs_train, outputs_train = vectorize_stories(input_list, output_list, word_to_idx, input_maxlen, output_maxlen, vocab_size)
+        inputs_train, outputs_train = vectorize_stories(input_list, output_list, vocab, word_to_idx, input_maxlen, output_maxlen, vocab_size)
 
-        en_de_model.fit(inputs_train, outputs_train, batch_size=10, nb_epoch=5, show_accuracy=True)
+        en_de_model.fit(inputs_train, outputs_train, batch_size=50, nb_epoch=5, show_accuracy=True)
         out_predicts = en_de_model.predict(inputs_train)
 
         for i_idx, out_predict in enumerate(out_predicts):
@@ -264,7 +264,7 @@ def main():
 
     print("test")
 
-    aa = en_de_model.predict(np.array([[3,4,5,6,7], [4,7,6,2,4]], dtype="int32"))
+    #aa = en_de_model.predict(np.array([[3,4,5,6,7], [4,7,6,2,4]], dtype="int32"))
 
 
 
